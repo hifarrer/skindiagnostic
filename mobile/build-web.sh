@@ -34,6 +34,12 @@ if [ -f "$MOBILE_DIR/scripts/pre-build.js" ]; then
   node "$MOBILE_DIR/scripts/pre-build.js"
 fi
 
+# Run expo-router patch script if it exists
+if [ -f "$MOBILE_DIR/scripts/patch-expo-router.js" ]; then
+  echo "Build script: Running expo-router patch script..."
+  node "$MOBILE_DIR/scripts/patch-expo-router.js"
+fi
+
 # Run the actual build command
 # Use expo export:web for webpack bundler (configured in app.json)
 echo "Build script: Running expo export:web..."

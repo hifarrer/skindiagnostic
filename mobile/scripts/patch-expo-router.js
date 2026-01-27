@@ -27,48 +27,62 @@ if (content.includes('// PATCHED: fromDir fix')) {
 const fromDirPattern = /fromDir\s*=\s*([^,;}\]]+)/g;
 const projectRootPattern = /process\.env\.EXPO_ROUTER_APP_ROOT|projectRoot|__dirname/;
 
-// Try to patch by adding a fallback
+// Try to patch by finding where fromDir is used and providing a fallback
 if (content.includes('fromDir') && !content.includes('// PATCHED: fromDir fix')) {
-  // Add a fallback at the top of the file or where fromDir is used
-  const patchCode = `
-// PATCHED: fromDir fix for webpack builds
+  console.log('Found fromDir in expo-router _ctx.web.js, attempting to patch...');
+  
+  // Look for the pattern where fromDir is expected to be a string
+  // Common pattern: fromDir parameter or fromDir variable
+  const fromDirPattern = /(?:fromDir\s*[=:]\s*|Expected\s+`fromDir`)/;
+  
+  // Try to find where fromDir is used and add a fallback
+  // The error says "Expected `fromDir` to be of type `string`, got `undefined`"
+  // So we need to ensure fromDir has a value before it's checked
+  
+  // Find all occurrences of fromDir
+  const fromDirMatches = [];
+  let searchIndex = 0;
+  while ((searchIndex = content.indexOf('fromDir', searchIndex)) !== -1) {
+    fromDirMatches.push(searchIndex);
+    searchIndex += 7; // length of 'fromDir'
+  }
+  
+  if (fromDirMatches.length > 0) {
+    // Try to find the function that uses fromDir
+    // Look for the transform function or similar
+    const transformMatch = content.match(/(?:function|const|let|var)\s+(\w+)?\s*[=\(].*?fromDir/);
+    
+    // Add patch at the beginning of the file
+    const patchHeader = `// PATCHED: fromDir fix for webpack builds
 const path = require('path');
-const getFromDir = () => {
-  if (typeof fromDir !== 'undefined' && fromDir) return fromDir;
-  if (process.env.EXPO_ROUTER_APP_ROOT) return process.env.EXPO_ROUTER_APP_ROOT;
-  if (typeof __dirname !== 'undefined') return __dirname;
-  return process.cwd();
-};
+// Ensure fromDir is set before any usage
+if (typeof fromDir === 'undefined' || !fromDir) {
+  fromDir = process.env.EXPO_ROUTER_APP_ROOT || (typeof __dirname !== 'undefined' ? __dirname : process.cwd());
+}
 `;
 
-  // Try to insert the patch before the first use of fromDir
-  const fromDirIndex = content.indexOf('fromDir');
-  if (fromDirIndex > -1) {
-    // Find the function or block that contains fromDir
-    const beforeFromDir = content.substring(0, fromDirIndex);
-    const afterFromDir = content.substring(fromDirIndex);
+    // Insert at the very beginning, after any existing comments/requires
+    const requireEnd = content.lastIndexOf('require(');
+    const firstFunction = content.indexOf('function');
+    const firstConst = content.indexOf('const');
+    const firstExport = content.indexOf('export');
     
-    // Try to find a good insertion point (before the function that uses fromDir)
-    const functionStart = beforeFromDir.lastIndexOf('function');
-    const asyncStart = beforeFromDir.lastIndexOf('async');
-    const constStart = beforeFromDir.lastIndexOf('const');
+    let insertPoint = Math.max(requireEnd, firstFunction, firstConst, firstExport);
+    if (insertPoint === -1) insertPoint = 0;
     
-    let insertPoint = Math.max(functionStart, asyncStart, constStart);
-    if (insertPoint === -1) {
-      insertPoint = 0;
-    }
+    // Find the end of the first statement/line
+    const lineEnd = content.indexOf('\n', insertPoint);
+    insertPoint = lineEnd > -1 ? lineEnd + 1 : 0;
     
-    // Insert the patch
-    const newContent = content.substring(0, insertPoint) + patchCode + content.substring(insertPoint);
-    
-    // Also replace fromDir usage with getFromDir()
-    const patchedContent = newContent.replace(/fromDir/g, 'getFromDir()');
+    const patchedContent = content.substring(0, insertPoint) + patchHeader + content.substring(insertPoint);
     
     fs.writeFileSync(expoRouterPath, patchedContent);
-    console.log('Patched expo-router _ctx.web.js');
+    console.log('Successfully patched expo-router _ctx.web.js with fromDir fix');
   } else {
-    console.log('Could not find fromDir in expo-router _ctx.web.js');
+    console.log('Could not find fromDir usage pattern in expo-router _ctx.web.js');
   }
+} else if (content.includes('// PATCHED: fromDir fix')) {
+  console.log('expo-router _ctx.web.js already patched');
 } else {
-  console.log('expo-router _ctx.web.js does not need patching or already patched');
+  console.log('expo-router _ctx.web.js does not contain fromDir, may not need patching');
 }
