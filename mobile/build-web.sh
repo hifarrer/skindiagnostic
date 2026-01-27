@@ -35,8 +35,8 @@ if [ -f "$MOBILE_DIR/scripts/pre-build.js" ]; then
 fi
 
 # Run the actual build command
-# This will work whether Render uses 'expo export:web' or 'expo export --platform web'
-echo "Build script: Running expo export..."
-npx expo export --platform web
+# Use expo export:web for webpack bundler (configured in app.json)
+echo "Build script: Running expo export:web..."
+npx expo export:web
 
 echo "Build script: Build complete!"
