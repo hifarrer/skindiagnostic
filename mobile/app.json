@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "AiMakeup",
+    "name": "SkingDiagnostics.AI",
     "slug": "aimakeup",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -26,19 +26,19 @@
       "package": "com.aimakeup.app"
     },
     "web": {
-      "bundler": "metro"
+      "bundler": "webpack"
     },
     "plugins": [
       [
         "expo-camera",
         {
-          "cameraPermission": "Allow AiMakeup to access your camera to try on makeup and analyze your skin."
+          "cameraPermission": "Allow SkingDiagnostics.AI to access your camera to analyze your skin."
         }
       ],
       [
         "expo-image-picker",
         {
-          "photosPermission": "Allow AiMakeup to access your photos to upload images for analysis."
+          "photosPermission": "Allow SkingDiagnostics.AI to access your photos to upload images for analysis."
         }
       ]
     ],

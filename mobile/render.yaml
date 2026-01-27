@@ -1,0 +1,14 @@
+services:
+  - type: static
+    name: aimakeup-frontend
+    buildCommand: npm install && npx expo export:web
+    staticPublishPath: ./web-build
+    envVars:
+      - key: EXPO_PUBLIC_API_URL
+        sync: false
+      - key: EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY
+        sync: false
+      - key: EXPO_PUBLIC_GOOGLE_CLIENT_ID
+        sync: false
+      - key: EXPO_PUBLIC_FACEBOOK_APP_ID
+        sync: false
