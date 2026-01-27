@@ -8,10 +8,18 @@ module.exports = async function (env, argv) {
   const projectRoot = path.resolve(__dirname);
   
   // Set environment variable for Expo Router (use env var if set, otherwise use projectRoot)
-  const appRoot = process.env.EXPO_ROUTER_APP_ROOT 
-    ? path.resolve(projectRoot, process.env.EXPO_ROUTER_APP_ROOT)
-    : projectRoot;
+  // If EXPO_ROUTER_APP_ROOT is already an absolute path, use it; otherwise resolve relative to projectRoot
+  let appRoot = projectRoot;
+  if (process.env.EXPO_ROUTER_APP_ROOT) {
+    appRoot = path.isAbsolute(process.env.EXPO_ROUTER_APP_ROOT)
+      ? process.env.EXPO_ROUTER_APP_ROOT
+      : path.resolve(projectRoot, process.env.EXPO_ROUTER_APP_ROOT);
+  }
+  // Ensure it's set as an absolute path
   process.env.EXPO_ROUTER_APP_ROOT = appRoot;
+  
+  console.log('Webpack config: projectRoot =', projectRoot);
+  console.log('Webpack config: EXPO_ROUTER_APP_ROOT =', appRoot);
   
   const config = await createExpoWebpackConfigAsync(
     {
@@ -56,6 +64,7 @@ module.exports = async function (env, argv) {
   config.plugins.push(
     new webpack.DefinePlugin({
       'process.env.EXPO_ROUTER_APP_ROOT': JSON.stringify(appRoot),
+      'process.env.EXPO_ROUTER_PROJECT_ROOT': JSON.stringify(projectRoot),
     })
   );
   
@@ -66,6 +75,23 @@ module.exports = async function (env, argv) {
       process: 'process/browser',
     })
   );
+  
+  // Add a custom plugin to fix expo-router fromDir issue
+  config.plugins.push({
+    apply: (compiler) => {
+      compiler.hooks.normalModuleFactory.tap('ExpoRouterFromDirFix', (nmf) => {
+        nmf.hooks.beforeResolve.tap('ExpoRouterFromDirFix', (data) => {
+          if (data.request && data.request.includes('expo-router/_ctx.web')) {
+            // Ensure the context has the project root
+            if (!data.context) {
+              data.context = projectRoot;
+            }
+          }
+          return data;
+        });
+      });
+    },
+  });
 
   return config;
 };

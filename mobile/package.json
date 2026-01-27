@@ -7,7 +7,8 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
-    "build:web": "EXPO_ROUTER_APP_ROOT=. npx expo export --platform web",
+    "prebuild:web": "node scripts/pre-build.js",
+    "build:web": "bash build-web.sh",
     "postinstall": "patch-package"
   },
   "dependencies": {
