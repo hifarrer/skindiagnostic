@@ -81,13 +81,13 @@ module.exports = async function (env, argv) {
     apply: (compiler) => {
       compiler.hooks.normalModuleFactory.tap('ExpoRouterFromDirFix', (nmf) => {
         nmf.hooks.beforeResolve.tap('ExpoRouterFromDirFix', (data) => {
-          if (data.request && data.request.includes('expo-router/_ctx.web')) {
-            // Ensure the context has the project root
+          if (data && data.request && data.request.includes('expo-router/_ctx.web')) {
+            // Ensure the context has the project root (modify in place, don't return)
             if (!data.context) {
               data.context = projectRoot;
             }
           }
-          return data;
+          // Don't return anything - beforeResolve is a bailing hook
         });
       });
     },
