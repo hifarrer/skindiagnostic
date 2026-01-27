@@ -4,7 +4,11 @@ const path = require('path');
 
 module.exports = async function (env, argv) {
   // Ensure projectRoot is set for Expo Router
+  // Use __dirname to get the directory where webpack.config.js is located
   const projectRoot = path.resolve(__dirname);
+  
+  // Set environment variable for Expo Router
+  process.env.EXPO_ROUTER_APP_ROOT = projectRoot;
   
   const config = await createExpoWebpackConfigAsync(
     {
@@ -19,6 +23,13 @@ module.exports = async function (env, argv) {
   
   // Ensure context is set correctly
   config.context = projectRoot;
+  
+  // Set resolve modules to include project root
+  if (!config.resolve.modules) {
+    config.resolve.modules = ['node_modules', projectRoot];
+  } else {
+    config.resolve.modules.push(projectRoot);
+  }
 
   // Add polyfills for Node.js core modules
   config.resolve.fallback = {
