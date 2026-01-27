@@ -6,15 +6,32 @@ set -e
 
 # Get the absolute path of the mobile directory (where this script is located)
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-export EXPO_ROUTER_APP_ROOT="$SCRIPT_DIR"
+
+# If the script is in a 'mobile' subdirectory, use that; otherwise use current directory
+if [ -f "$SCRIPT_DIR/package.json" ] && [ -f "$SCRIPT_DIR/app.json" ]; then
+  MOBILE_DIR="$SCRIPT_DIR"
+else
+  # Try to find mobile directory from current location
+  if [ -d "mobile" ] && [ -f "mobile/package.json" ]; then
+    MOBILE_DIR="$(cd mobile && pwd)"
+  else
+    MOBILE_DIR="$SCRIPT_DIR"
+  fi
+fi
+
+export EXPO_ROUTER_APP_ROOT="$MOBILE_DIR"
 
 echo "Build script: Setting EXPO_ROUTER_APP_ROOT to $EXPO_ROUTER_APP_ROOT"
 echo "Build script: Current directory: $(pwd)"
+echo "Build script: Mobile directory: $MOBILE_DIR"
+
+# Change to mobile directory if we're not already there
+cd "$MOBILE_DIR"
 
 # Run pre-build script if it exists
-if [ -f "$SCRIPT_DIR/scripts/pre-build.js" ]; then
+if [ -f "$MOBILE_DIR/scripts/pre-build.js" ]; then
   echo "Build script: Running pre-build script..."
-  node "$SCRIPT_DIR/scripts/pre-build.js"
+  node "$MOBILE_DIR/scripts/pre-build.js"
 fi
 
 # Run the actual build command
