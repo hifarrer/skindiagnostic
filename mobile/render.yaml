@@ -1,7 +1,7 @@
 services:
   - type: static
     name: aimakeup-frontend
-    buildCommand: npm install && npx expo export --platform web
+    buildCommand: npm install && npm run build:web
     staticPublishPath: ./web-build
     envVars:
       - key: EXPO_PUBLIC_API_URL
@@ -12,3 +12,5 @@ services:
         sync: false
       - key: EXPO_PUBLIC_FACEBOOK_APP_ID
         sync: false
+      - key: EXPO_ROUTER_APP_ROOT
+        value: .

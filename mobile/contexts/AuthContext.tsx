@@ -75,13 +75,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = async () => {
     try {
+      console.log('[AuthContext] Starting logout...');
       await AsyncStorage.removeItem('auth_token');
       await AsyncStorage.removeItem('auth_user');
       setToken(null);
       setUser(null);
       apiClient.setToken(null);
+      console.log('[AuthContext] Logout complete - token and user cleared');
     } catch (error) {
-      console.error('Error logging out:', error);
+      console.error('[AuthContext] Error logging out:', error);
+      // Still clear state even if storage fails
+      setToken(null);
+      setUser(null);
+      apiClient.setToken(null);
     }
   };
 

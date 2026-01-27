@@ -40,10 +40,27 @@ export default function StatisticsScreen() {
     }
 
     try {
+      console.log('[Statistics] Fetching skin analysis history...');
       const results = await skinAnalysisService.getHistory();
+      console.log('[Statistics] Received results:', results?.length || 0, 'items');
+      if (results && results.length > 0) {
+        console.log('[Statistics] First result sample:', {
+          id: results[0].id,
+          hasScores: !!results[0].scores,
+          scoresCount: results[0].scores ? Object.keys(results[0].scores).length : 0,
+          createdAt: results[0].createdAt,
+        });
+      }
       setHistory(results || []);
     } catch (error: any) {
-      console.error('Error fetching history:', error);
+      console.error('[Statistics] Error fetching history:', error);
+      console.error('[Statistics] Error details:', {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status,
+      });
+      // Still set empty array to show "no results" message
+      setHistory([]);
     } finally {
       setLoading(false);
       setRefreshing(false);

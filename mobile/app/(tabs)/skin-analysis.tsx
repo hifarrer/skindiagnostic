@@ -18,6 +18,41 @@ import { usePolling } from '../../hooks/usePolling';
 import { useAuth } from '../../contexts/AuthContext';
 import { useRouter } from 'expo-router';
 
+// Utility function to determine SD or HD mode based on image dimensions
+const determineImageMode = (width: number, height: number): 'sd' | 'hd' => {
+  const longSide = Math.max(width, height);
+  const shortSide = Math.min(width, height);
+  
+  // HD: up to 2560 pixels on the long side and at least 1080 pixels on the short side
+  if (longSide <= 2560 && shortSide >= 1080) {
+    return 'hd';
+  }
+  
+  // SD: up to 1920 pixels on the long side and at least 480 pixels on the short side
+  if (longSide <= 1920 && shortSide >= 480) {
+    return 'sd';
+  }
+  
+  // Default to SD if dimensions don't meet HD requirements
+  // This handles edge cases where image might be too small or too large
+  return 'sd';
+};
+
+// Utility function to get image dimensions from URI
+const getImageDimensions = (uri: string): Promise<{ width: number; height: number }> => {
+  return new Promise((resolve, reject) => {
+    Image.getSize(
+      uri,
+      (width, height) => {
+        resolve({ width, height });
+      },
+      (error) => {
+        reject(error);
+      }
+    );
+  });
+};
+
 // Available skin concerns - SD and HD options
 const SD_CONCERNS = [
   { id: 'acne', label: 'Acne' },
@@ -61,7 +96,8 @@ export default function SkinAnalysisScreen() {
   const [taskId, setTaskId] = useState<string | null>(null);
   const [result, setResult] = useState<any>(null);
   const [selectedConcerns, setSelectedConcerns] = useState<string[]>([]);
-  const [concernMode, setConcernMode] = useState<'sd' | 'hd'>('hd'); // Default to HD
+  const [concernMode, setConcernMode] = useState<'sd' | 'hd' | null>(null); // Auto-detected based on image
+  const [imageDimensions, setImageDimensions] = useState<{ width: number; height: number } | null>(null);
   const [selectedScoreType, setSelectedScoreType] = useState<string | null>(null); // Track which score is selected
 
   // Poll for results when taskId is set
@@ -96,6 +132,37 @@ export default function SkinAnalysisScreen() {
     return true;
   };
 
+  const handleImageSelected = async (imageUri: string, width?: number, height?: number) => {
+    setSelectedImage(imageUri);
+    setSelectedConcerns([]); // Reset concerns when new image is selected
+    
+    try {
+      let imgWidth = width;
+      let imgHeight = height;
+      
+      // If dimensions not provided, get them from the image
+      if (!imgWidth || !imgHeight) {
+        const dimensions = await getImageDimensions(imageUri);
+        imgWidth = dimensions.width;
+        imgHeight = dimensions.height;
+      }
+      
+      setImageDimensions({ width: imgWidth, height: imgHeight });
+      
+      // Automatically determine SD or HD mode based on dimensions
+      const detectedMode = determineImageMode(imgWidth, imgHeight);
+      setConcernMode(detectedMode);
+    } catch (error) {
+      console.error('Error getting image dimensions:', error);
+      // Default to SD if we can't determine dimensions
+      setConcernMode('sd');
+      Alert.alert(
+        'Warning',
+        'Could not determine image dimensions. Using Standard (SD) mode. For best results, use images with at least 1080px on the short side for HD analysis.'
+      );
+    }
+  };
+
   const handleTakePhoto = async () => {
     if (!user || !token) {
       Alert.alert('Login Required', 'Please login to use this feature', [
@@ -116,7 +183,8 @@ export default function SkinAnalysisScreen() {
       });
 
       if (!result.canceled && result.assets[0]) {
-        setSelectedImage(result.assets[0].uri);
+        const asset = result.assets[0];
+        await handleImageSelected(asset.uri, asset.width, asset.height);
       }
     } catch (error) {
       Alert.alert('Error', 'Failed to take photo. Please try again.');
@@ -141,7 +209,8 @@ export default function SkinAnalysisScreen() {
       });
 
       if (!result.canceled && result.assets[0]) {
-        setSelectedImage(result.assets[0].uri);
+        const asset = result.assets[0];
+        await handleImageSelected(asset.uri, asset.width, asset.height);
       }
     } catch (error) {
       Alert.alert('Error', 'Failed to select image. Please try again.');
@@ -214,39 +283,30 @@ export default function SkinAnalysisScreen() {
         {/* Skin Concern Selection */}
         <View style={styles.concernSection}>
           <Text style={styles.sectionTitle}>Select Skin Concerns</Text>
-          <Text style={styles.sectionSubtitle}>
-            Choose concerns either all in SD or all in HD
-          </Text>
           
-          {/* Mode Toggle */}
-          <View style={styles.modeToggle}>
-            <TouchableOpacity
-              style={[styles.modeButton, concernMode === 'sd' && styles.modeButtonActive]}
-              onPress={() => {
-                setConcernMode('sd');
-                setSelectedConcerns([]);
-              }}
-            >
-              <Text style={[styles.modeButtonText, concernMode === 'sd' && styles.modeButtonTextActive]}>
-                Standard (SD)
+          {selectedImage && concernMode && (
+            <View style={styles.modeIndicator}>
+              <Text style={styles.modeIndicatorText}>
+                {concernMode === 'hd' ? '🔍 High Definition (HD)' : '📷 Standard (SD)'} mode detected
               </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.modeButton, concernMode === 'hd' && styles.modeButtonActive]}
-              onPress={() => {
-                setConcernMode('hd');
-                setSelectedConcerns([]);
-              }}
-            >
-              <Text style={[styles.modeButtonText, concernMode === 'hd' && styles.modeButtonTextActive]}>
-                High Definition (HD)
-              </Text>
-            </TouchableOpacity>
-          </View>
+              {imageDimensions && (
+                <Text style={styles.modeIndicatorSubtext}>
+                  Image: {imageDimensions.width} × {imageDimensions.height} pixels
+                </Text>
+              )}
+            </View>
+          )}
+          
+          {!selectedImage && (
+            <Text style={styles.sectionSubtitle}>
+              Upload an image to automatically detect the best analysis mode
+            </Text>
+          )}
 
           {/* Concern Checkboxes */}
-          <View style={styles.concernsGrid}>
-            {(concernMode === 'sd' ? SD_CONCERNS : HD_CONCERNS).map((concern) => (
+          {concernMode && (
+            <View style={styles.concernsGrid}>
+              {(concernMode === 'sd' ? SD_CONCERNS : HD_CONCERNS).map((concern) => (
               <TouchableOpacity
                 key={concern.id}
                 style={[
@@ -264,8 +324,17 @@ export default function SkinAnalysisScreen() {
                   {concern.label}
                 </Text>
               </TouchableOpacity>
-            ))}
-          </View>
+              ))}
+            </View>
+          )}
+          
+          {!concernMode && selectedImage && (
+            <View style={styles.warningBox}>
+              <Text style={styles.warningText}>
+                ⚠️ Detecting image mode...
+              </Text>
+            </View>
+          )}
           
           {selectedConcerns.length > 0 && (
             <Text style={styles.selectedCount}>
@@ -499,7 +568,7 @@ export default function SkinAnalysisScreen() {
           </TouchableOpacity>
         </View>
 
-        {selectedImage && selectedConcerns.length > 0 && !uploading && !polling && !result && (
+        {selectedImage && concernMode && selectedConcerns.length > 0 && !uploading && !polling && !result && (
           <TouchableOpacity
             style={[styles.button, styles.analyzeButton]}
             onPress={handleAnalyze}
@@ -508,10 +577,18 @@ export default function SkinAnalysisScreen() {
           </TouchableOpacity>
         )}
         
-        {selectedImage && selectedConcerns.length === 0 && (
+        {selectedImage && concernMode && selectedConcerns.length === 0 && (
           <View style={styles.warningBox}>
             <Text style={styles.warningText}>
               ⚠️ Please select at least one skin concern before analyzing
+            </Text>
+          </View>
+        )}
+        
+        {selectedImage && !concernMode && (
+          <View style={styles.warningBox}>
+            <Text style={styles.warningText}>
+              ⚠️ Detecting image mode. Please wait...
             </Text>
           </View>
         )}
@@ -520,8 +597,14 @@ export default function SkinAnalysisScreen() {
           <Text style={styles.infoTitle}>How it works:</Text>
           <Text style={styles.infoText}>
             1. Take or upload a clear photo of your face{'\n'}
-            2. Our AI analyzes your skin condition{'\n'}
-            3. Get detailed insights and recommendations
+            2. The system automatically detects the best analysis mode (SD or HD) based on your image size{'\n'}
+            3. Select the skin concerns you want to analyze{'\n'}
+            4. Get detailed insights and recommendations
+          </Text>
+          <Text style={styles.infoSubtext}>
+            {'\n'}Image requirements:{'\n'}
+            • HD: Up to 2560px on long side, at least 1080px on short side{'\n'}
+            • SD: Up to 1920px on long side, at least 480px on short side
           </Text>
         </View>
       </View>
@@ -744,6 +827,12 @@ const styles = StyleSheet.create({
     color: '#666',
     lineHeight: 22,
   },
+  infoSubtext: {
+    fontSize: 12,
+    color: '#888',
+    lineHeight: 18,
+    marginTop: 8,
+  },
   concernSection: {
     backgroundColor: Colors.white,
     padding: 15,
@@ -769,32 +858,23 @@ const styles = StyleSheet.create({
     marginBottom: 15,
     fontStyle: 'italic',
   },
-  modeToggle: {
-    flexDirection: 'row',
-    marginBottom: 15,
+  modeIndicator: {
     backgroundColor: Colors.background.lightBlue,
     borderRadius: 8,
-    padding: 4,
+    padding: 12,
+    marginBottom: 15,
     borderWidth: 1,
-    borderColor: Colors.gray.light,
+    borderColor: Colors.primary.orange,
   },
-  modeButton: {
-    flex: 1,
-    paddingVertical: 10,
-    paddingHorizontal: 15,
-    borderRadius: 6,
-    alignItems: 'center',
-  },
-  modeButtonActive: {
-    backgroundColor: Colors.primary.orange,
-  },
-  modeButtonText: {
+  modeIndicatorText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#666',
+    color: Colors.primary.orange,
+    marginBottom: 4,
   },
-  modeButtonTextActive: {
-    color: '#fff',
+  modeIndicatorSubtext: {
+    fontSize: 12,
+    color: '#666',
   },
   concernsGrid: {
     flexDirection: 'row',

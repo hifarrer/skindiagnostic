@@ -8,22 +8,26 @@ import {
   TextInput,
   Alert,
   ActivityIndicator,
+  Platform,
+  Pressable,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Colors } from '../../constants/Colors';
 import { useAuth } from '../../contexts/AuthContext';
 import { profileService, UserProfile } from '../../services/profileService';
 import { LoadingSpinner } from '../../components/LoadingSpinner';
+import { authService } from '../../services/authService';
 
 export default function ProfileScreen() {
   const router = useRouter();
-  const { user: authUser, updateUser } = useAuth();
+  const { user: authUser, updateUser, logout: logoutAuth } = useAuth();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [editing, setEditing] = useState(false);
   const [email, setEmail] = useState('');
   const [age, setAge] = useState('');
+  const [loggingOut, setLoggingOut] = useState(false);
   
   useEffect(() => {
     loadProfile();
@@ -102,6 +106,105 @@ export default function ProfileScreen() {
       setAge(profile.age?.toString() || '');
     }
     setEditing(false);
+  };
+
+  const handleLogout = async () => {
+    console.log('[Profile] Logout button clicked!');
+    
+    // For web, use window.confirm as Alert.alert might not work
+    if (typeof window !== 'undefined') {
+      const confirmed = window.confirm('Are you sure you want to logout?');
+      if (!confirmed) {
+        console.log('[Profile] Logout cancelled by user');
+        return;
+      }
+      
+      // Proceed with logout
+      try {
+        setLoggingOut(true);
+        console.log('[Profile] Starting logout process...');
+        
+        // Call backend logout
+        try {
+          await authService.logout();
+          console.log('[Profile] Backend logout successful');
+        } catch (error) {
+          console.error('[Profile] Error calling backend logout:', error);
+          // Continue with local logout even if backend fails
+        }
+        
+        // Clear local auth state
+        console.log('[Profile] Clearing local auth state...');
+        await logoutAuth();
+        console.log('[Profile] Local auth state cleared');
+        
+        // Wait a moment for React to process state updates
+        await new Promise(resolve => setTimeout(resolve, 200));
+        
+        // Navigate directly to login page
+        console.log('[Profile] Navigating to login page...');
+        router.replace('/(auth)/login');
+        
+        // Reset loading state after navigation
+        setLoggingOut(false);
+      } catch (error) {
+        console.error('[Profile] Error during logout:', error);
+        alert('Failed to logout. Please try again.');
+        setLoggingOut(false);
+      }
+      return;
+    }
+    
+    // For native platforms, use Alert.alert
+    Alert.alert(
+      'Logout',
+      'Are you sure you want to logout?',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+          onPress: () => console.log('[Profile] Logout cancelled by user'),
+        },
+        {
+          text: 'Logout',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              setLoggingOut(true);
+              console.log('[Profile] Starting logout process...');
+              
+              // Call backend logout
+              try {
+                await authService.logout();
+                console.log('[Profile] Backend logout successful');
+              } catch (error) {
+                console.error('[Profile] Error calling backend logout:', error);
+                // Continue with local logout even if backend fails
+              }
+              
+              // Clear local auth state
+              console.log('[Profile] Clearing local auth state...');
+              await logoutAuth();
+              console.log('[Profile] Local auth state cleared');
+              
+              // Wait a moment for React to process state updates
+              await new Promise(resolve => setTimeout(resolve, 200));
+              
+              // Navigate directly to login page
+              console.log('[Profile] Navigating to login page...');
+              router.replace('/(auth)/login');
+              
+              // Reset loading state after navigation
+              setLoggingOut(false);
+            } catch (error) {
+              console.error('[Profile] Error during logout:', error);
+              Alert.alert('Error', 'Failed to logout. Please try again.');
+              setLoggingOut(false);
+            }
+          },
+        },
+      ]
+    );
   };
   
   const menuItems = [
@@ -201,7 +304,7 @@ export default function ProfileScreen() {
         <View style={styles.statsContainer}>
           <View style={styles.statBox}>
             <Text style={styles.statNumber}>{profile.statistics?.analyses || 0}</Text>
-            <Text style={styles.statLabel}>Analyses</Text>
+            <Text style={styles.statLabel}>Skin Analysis</Text>
           </View>
           <View style={styles.statBox}>
             <Text style={styles.statNumber}>{profile.statistics?.looksTried || 0}</Text>
@@ -229,6 +332,32 @@ export default function ProfileScreen() {
               <Text style={styles.menuArrow}>›</Text>
             </TouchableOpacity>
           ))}
+          
+          <Pressable
+            style={({ pressed }) => [
+              styles.menuItem,
+              styles.logoutItem,
+              pressed && styles.menuItemPressed,
+              loggingOut && styles.menuItemDisabled,
+            ]}
+            onPress={() => {
+              console.log('[Profile] Logout button pressed!');
+              // Test if button is working
+              if (Platform.OS === 'web') {
+                console.log('[Profile] Web platform detected');
+              }
+              handleLogout();
+            }}
+            disabled={loggingOut}
+          >
+            <Text style={styles.menuIcon}>🚪</Text>
+            <Text style={[styles.menuLabel, styles.logoutLabel]}>
+              {loggingOut ? 'Logging out...' : 'Logout'}
+            </Text>
+            {loggingOut && (
+              <ActivityIndicator size="small" color={Colors.accent.red} style={{ marginLeft: 10 }} />
+            )}
+          </Pressable>
         </View>
       </View>
     </ScrollView>
@@ -412,5 +541,21 @@ const styles = StyleSheet.create({
   menuArrow: {
     fontSize: 24,
     color: Colors.gray.dark,
+  },
+  logoutItem: {
+    marginTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: Colors.gray.light,
+    paddingTop: 18,
+  },
+  logoutLabel: {
+    color: Colors.accent.red,
+    fontWeight: '600',
+  },
+  menuItemPressed: {
+    opacity: 0.7,
+  },
+  menuItemDisabled: {
+    opacity: 0.5,
   },
 });

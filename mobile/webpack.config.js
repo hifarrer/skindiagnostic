@@ -7,8 +7,11 @@ module.exports = async function (env, argv) {
   // Use __dirname to get the directory where webpack.config.js is located
   const projectRoot = path.resolve(__dirname);
   
-  // Set environment variable for Expo Router
-  process.env.EXPO_ROUTER_APP_ROOT = projectRoot;
+  // Set environment variable for Expo Router (use env var if set, otherwise use projectRoot)
+  const appRoot = process.env.EXPO_ROUTER_APP_ROOT 
+    ? path.resolve(projectRoot, process.env.EXPO_ROUTER_APP_ROOT)
+    : projectRoot;
+  process.env.EXPO_ROUTER_APP_ROOT = appRoot;
   
   const config = await createExpoWebpackConfigAsync(
     {
@@ -27,10 +30,10 @@ module.exports = async function (env, argv) {
   // Set resolve modules to include project root
   if (!config.resolve.modules) {
     config.resolve.modules = ['node_modules', projectRoot];
-  } else {
+  } else if (!config.resolve.modules.includes(projectRoot)) {
     config.resolve.modules.push(projectRoot);
   }
-
+  
   // Add polyfills for Node.js core modules
   config.resolve.fallback = {
     ...config.resolve.fallback,
@@ -46,14 +49,23 @@ module.exports = async function (env, argv) {
     zlib: require.resolve('browserify-zlib'),
   };
 
+  // Ensure plugins array exists and add our plugins
+  config.plugins = config.plugins || [];
+  
+  // Add DefinePlugin to ensure EXPO_ROUTER_APP_ROOT is available at build time
+  config.plugins.push(
+    new webpack.DefinePlugin({
+      'process.env.EXPO_ROUTER_APP_ROOT': JSON.stringify(appRoot),
+    })
+  );
+  
   // Provide global variables for packages that expect them
-  config.plugins = [
-    ...config.plugins,
+  config.plugins.push(
     new webpack.ProvidePlugin({
       Buffer: ['buffer', 'Buffer'],
       process: 'process/browser',
-    }),
-  ];
+    })
+  );
 
   return config;
 };
