@@ -144,15 +144,21 @@ const pollSkinAnalysisTask = async (perfectCorpTaskId, dbTaskId, userId, imageUr
       output: output, // Store full output for reference
     });
 
-    // Create skin analysis result
-    await SkinAnalysisResult.create({
-      user_id: userId,
-      task_id: dbTaskId,
-      image_url: imageUrl,
-      scores,
-    });
+    // Create skin analysis result - always create even if scores are empty
+    try {
+      const analysisResult = await SkinAnalysisResult.create({
+        user_id: userId,
+        task_id: dbTaskId,
+        image_url: imageUrl,
+        scores: scores || {}, // Ensure scores is always an object
+      });
+      console.log(`[SkinAnalysis] Created result record with ID: ${analysisResult.id}, scores count: ${Object.keys(scores || {}).length}`);
+    } catch (createError) {
+      console.error('[SkinAnalysis] Error creating result record:', createError);
+      // Don't throw - the task is already updated, we just log the error
+    }
   } catch (error) {
-    console.error('Polling error:', error);
+    console.error('[SkinAnalysis] Polling error:', error);
     await Task.updateStatus(perfectCorpTaskId, 'error', null, { error: error.message });
   }
 };
@@ -222,7 +228,9 @@ export const getTaskStatus = async (req, res) => {
 
 export const getHistory = async (req, res) => {
   try {
+    console.log(`[SkinAnalysis] Fetching history for user ID: ${req.user.id}`);
     const results = await SkinAnalysisResult.findByUserId(req.user.id);
+    console.log(`[SkinAnalysis] Found ${results.length} result(s) in database`);
     
     // Parse scores and enrich with task metadata
     const parsedResults = await Promise.all(results.map(async (result) => {
@@ -277,7 +285,7 @@ export const getHistory = async (req, res) => {
         user_id: result.user_id,
         task_id: taskId || result.task_id,
         image_url: result.image_url,
-        scores: scores,
+        scores: scores || {},
         maskUrls: maskUrls,
         originalImageUrl: originalImageUrl,
         resultUrl: resultUrl,
@@ -286,9 +294,10 @@ export const getHistory = async (req, res) => {
       };
     }));
     
+    console.log(`[SkinAnalysis] Returning ${parsedResults.length} parsed result(s)`);
     res.json(parsedResults);
   } catch (error) {
-    console.error('Get history error:', error);
+    console.error('[SkinAnalysis] Get history error:', error);
     res.status(500).json({ error: 'Failed to get history' });
   }
 };

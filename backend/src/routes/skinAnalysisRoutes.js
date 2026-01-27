@@ -13,8 +13,8 @@ const upload = multer({
 });
 
 router.post('/upload', authenticate, upload.single('image'), uploadImage);
+router.get('/history', authenticate, getHistory); // Must come before /:taskId to avoid route conflict
 router.get('/:taskId', authenticate, getTaskStatus);
-router.get('/history', authenticate, getHistory);
 
 export default router;
 
