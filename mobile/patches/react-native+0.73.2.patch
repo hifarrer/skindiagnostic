@@ -1,0 +1,2568 @@
+diff --git a/node_modules/react-native/Libraries/Alert/Alert.js b/node_modules/react-native/Libraries/Alert/Alert.js
+index a6a0ccb..7dfd172 100644
+--- a/node_modules/react-native/Libraries/Alert/Alert.js
++++ b/node_modules/react-native/Libraries/Alert/Alert.js
+@@ -10,8 +10,10 @@
+ 
+ import type {DialogOptions} from '../NativeModules/specs/NativeDialogManagerAndroid';
+ 
+-import Platform from '../Utilities/Platform';
+-import RCTAlertManager from './RCTAlertManager';
++import Platform from 'react-native-web/dist/exports/Platform';
++const RCTAlertManager = Platform.OS === 'web' 
++  ? require('./RCTAlertManager.web')
++  : require('./RCTAlertManager');
+ 
+ export type AlertType =
+   | 'default'
+diff --git a/node_modules/react-native/Libraries/Alert/RCTAlertManager.web.js b/node_modules/react-native/Libraries/Alert/RCTAlertManager.web.js
+new file mode 100644
+index 0000000..87c46e9
+--- /dev/null
++++ b/node_modules/react-native/Libraries/Alert/RCTAlertManager.web.js
+@@ -0,0 +1,51 @@
++/**
++ * Web stub for RCTAlertManager
++ * Uses browser's native alert/dialog on web
++ */
++
++class RCTAlertManager {
++  static alertWithArgs(args: Object, callback: ?Function): void {
++    const {title, message, buttons} = args;
++    
++    // Build the alert message
++    let alertMessage = '';
++    if (title) {
++      alertMessage += title;
++    }
++    if (message) {
++      if (alertMessage) {
++        alertMessage += '\n\n';
++      }
++      alertMessage += message;
++    }
++    
++    // For web, use browser's native alert
++    // If there are buttons, we'll just show the first one's action
++    if (buttons && buttons.length > 0) {
++      // Get the first button's text
++      const firstButton = buttons[0];
++      const buttonText = Object.values(firstButton)[0] || 'OK';
++      
++      // Use confirm for multiple buttons, alert for single
++      if (buttons.length > 1) {
++        const result = window.confirm(alertMessage);
++        if (callback && result) {
++          // Call callback with first button index (0)
++          callback(0, null);
++        }
++      } else {
++        window.alert(alertMessage);
++        if (callback) {
++          callback(0, null);
++        }
++      }
++    } else {
++      window.alert(alertMessage);
++      if (callback) {
++        callback(0, null);
++      }
++    }
++  }
++}
++
++module.exports = RCTAlertManager;
+diff --git a/node_modules/react-native/Libraries/Animated/Animated.js b/node_modules/react-native/Libraries/Animated/Animated.js
+index a9df993..f439503 100644
+--- a/node_modules/react-native/Libraries/Animated/Animated.js
++++ b/node_modules/react-native/Libraries/Animated/Animated.js
+@@ -17,7 +17,7 @@ import typeof AnimatedSectionList from './components/AnimatedSectionList';
+ import typeof AnimatedText from './components/AnimatedText';
+ import typeof AnimatedView from './components/AnimatedView';
+ 
+-import Platform from '../Utilities/Platform';
++import Platform from 'react-native-web/dist/exports/Platform';
+ import AnimatedImplementation from './AnimatedImplementation';
+ import AnimatedMock from './AnimatedMock';
+ 
+diff --git a/node_modules/react-native/Libraries/Animated/NativeAnimatedHelper.js b/node_modules/react-native/Libraries/Animated/NativeAnimatedHelper.js
+index a96287d..1405903 100644
+--- a/node_modules/react-native/Libraries/Animated/NativeAnimatedHelper.js
++++ b/node_modules/react-native/Libraries/Animated/NativeAnimatedHelper.js
+@@ -21,7 +21,7 @@ import type {InterpolationConfigType} from './nodes/AnimatedInterpolation';
+ import NativeEventEmitter from '../EventEmitter/NativeEventEmitter';
+ import RCTDeviceEventEmitter from '../EventEmitter/RCTDeviceEventEmitter';
+ import ReactNativeFeatureFlags from '../ReactNative/ReactNativeFeatureFlags';
+-import Platform from '../Utilities/Platform';
++import Platform from 'react-native-web/dist/exports/Platform';
+ import NativeAnimatedNonTurboModule from './NativeAnimatedModule';
+ import NativeAnimatedTurboModule from './NativeAnimatedTurboModule';
+ import invariant from 'invariant';
+diff --git a/node_modules/react-native/Libraries/Animated/animations/Animation.js b/node_modules/react-native/Libraries/Animated/animations/Animation.js
+index d8e955f..1093ab7 100644
+--- a/node_modules/react-native/Libraries/Animated/animations/Animation.js
++++ b/node_modules/react-native/Libraries/Animated/animations/Animation.js
+@@ -14,7 +14,7 @@ import type {PlatformConfig} from '../AnimatedPlatformConfig';
+ import type AnimatedNode from '../nodes/AnimatedNode';
+ import type AnimatedValue from '../nodes/AnimatedValue';
+ 
+-import Platform from '../../Utilities/Platform';
++import Platform from 'react-native-web/dist/exports/Platform';
+ import NativeAnimatedHelper from '../NativeAnimatedHelper';
+ import AnimatedColor from '../nodes/AnimatedColor';
+ import AnimatedProps from '../nodes/AnimatedProps';
+diff --git a/node_modules/react-native/Libraries/Animated/components/AnimatedScrollView.js b/node_modules/react-native/Libraries/Animated/components/AnimatedScrollView.js
+index e2b48d0..6dad1f5 100644
+--- a/node_modules/react-native/Libraries/Animated/components/AnimatedScrollView.js
++++ b/node_modules/react-native/Libraries/Animated/components/AnimatedScrollView.js
+@@ -16,7 +16,7 @@ import ScrollView from '../../Components/ScrollView/ScrollView';
+ import flattenStyle from '../../StyleSheet/flattenStyle';
+ import splitLayoutProps from '../../StyleSheet/splitLayoutProps';
+ import StyleSheet from '../../StyleSheet/StyleSheet';
+-import Platform from '../../Utilities/Platform';
++import Platform from 'react-native-web/dist/exports/Platform';
+ import useMergeRefs from '../../Utilities/useMergeRefs';
+ import createAnimatedComponent from '../createAnimatedComponent';
+ import useAnimatedProps from '../useAnimatedProps';
+diff --git a/node_modules/react-native/Libraries/Animated/nodes/AnimatedStyle.js b/node_modules/react-native/Libraries/Animated/nodes/AnimatedStyle.js
+index 8766d5e..b124f82 100644
+--- a/node_modules/react-native/Libraries/Animated/nodes/AnimatedStyle.js
++++ b/node_modules/react-native/Libraries/Animated/nodes/AnimatedStyle.js
+@@ -14,7 +14,7 @@ import type {PlatformConfig} from '../AnimatedPlatformConfig';
+ 
+ import ReactNativeFeatureFlags from '../../ReactNative/ReactNativeFeatureFlags';
+ import flattenStyle from '../../StyleSheet/flattenStyle';
+-import Platform from '../../Utilities/Platform';
++import Platform from 'react-native-web/dist/exports/Platform';
+ import NativeAnimatedHelper from '../NativeAnimatedHelper';
+ import AnimatedNode from './AnimatedNode';
+ import AnimatedObject, {hasAnimatedNode} from './AnimatedObject';
+diff --git a/node_modules/react-native/Libraries/Animated/shouldUseTurboAnimatedModule.js b/node_modules/react-native/Libraries/Animated/shouldUseTurboAnimatedModule.js
+index c112ba9..a48cc53 100644
+--- a/node_modules/react-native/Libraries/Animated/shouldUseTurboAnimatedModule.js
++++ b/node_modules/react-native/Libraries/Animated/shouldUseTurboAnimatedModule.js
+@@ -8,7 +8,7 @@
+  * @format
+  */
+ 
+-import Platform from '../Utilities/Platform';
++import Platform from 'react-native-web/dist/exports/Platform';
+ 
+ function shouldUseTurboAnimatedModule(): boolean {
+   return Platform.OS === 'ios' && global.RN$Bridgeless === true;
+diff --git a/node_modules/react-native/Libraries/AppState/AppState.js b/node_modules/react-native/Libraries/AppState/AppState.js
+index f82afa0..e7ed658 100644
+--- a/node_modules/react-native/Libraries/AppState/AppState.js
++++ b/node_modules/react-native/Libraries/AppState/AppState.js
+@@ -10,7 +10,7 @@
+ 
+ import NativeEventEmitter from '../EventEmitter/NativeEventEmitter';
+ import logError from '../Utilities/logError';
+-import Platform from '../Utilities/Platform';
++import Platform from 'react-native-web/dist/exports/Platform';
+ import {type EventSubscription} from '../vendor/emitter/EventEmitter';
+ import NativeAppState from './NativeAppState';
+ 
+diff --git a/node_modules/react-native/Libraries/BatchedBridge/NativeModules.js b/node_modules/react-native/Libraries/BatchedBridge/NativeModules.js
+index 26961d7..54bde1a 100644
+--- a/node_modules/react-native/Libraries/BatchedBridge/NativeModules.js
++++ b/node_modules/react-native/Libraries/BatchedBridge/NativeModules.js
+@@ -178,33 +178,47 @@ let NativeModules: {[moduleName: string]: $FlowFixMe, ...} = {};
+ if (global.nativeModuleProxy) {
+   NativeModules = global.nativeModuleProxy;
+ } else if (!global.nativeExtensions) {
+-  const bridgeConfig = global.__fbBatchedBridgeConfig;
+-  invariant(
+-    bridgeConfig,
+-    '__fbBatchedBridgeConfig is not set, cannot invoke native modules',
+-  );
+-
+-  const defineLazyObjectProperty = require('../Utilities/defineLazyObjectProperty');
+-  (bridgeConfig.remoteModuleConfig || []).forEach(
+-    (config: ModuleConfig, moduleID: number) => {
+-      // Initially this config will only contain the module name when running in JSC. The actual
+-      // configuration of the module will be lazily loaded.
+-      const info = genModule(config, moduleID);
+-      if (!info) {
+-        return;
+-      }
++  // For web, set up empty bridge config if not already set
++  if (typeof window !== 'undefined' && !global.__fbBatchedBridgeConfig) {
++    global.__fbBatchedBridgeConfig = {
++      remoteModuleConfig: [],
++    };
++  }
+   
+-      if (info.module) {
+-        NativeModules[info.name] = info.module;
+-      }
+-      // If there's no module config, define a lazy getter
+-      else {
+-        defineLazyObjectProperty(NativeModules, info.name, {
+-          get: () => loadModule(info.name, moduleID),
+-        });
+-      }
+-    },
+-  );
++  const bridgeConfig = global.__fbBatchedBridgeConfig;
++  if (!bridgeConfig) {
++    // On web, use empty NativeModules instead of throwing
++    if (typeof window !== 'undefined') {
++      // NativeModules is already empty, just export it
++    } else {
++      invariant(
++        bridgeConfig,
++        '__fbBatchedBridgeConfig is not set, cannot invoke native modules',
++      );
++    }
++  } else {
++    const defineLazyObjectProperty = require('../Utilities/defineLazyObjectProperty');
++    (bridgeConfig.remoteModuleConfig || []).forEach(
++      (config: ModuleConfig, moduleID: number) => {
++        // Initially this config will only contain the module name when running in JSC. The actual
++        // configuration of the module will be lazily loaded.
++        const info = genModule(config, moduleID);
++        if (!info) {
++          return;
++        }
++
++        if (info.module) {
++          NativeModules[info.name] = info.module;
++        }
++        // If there's no module config, define a lazy getter
++        else {
++          defineLazyObjectProperty(NativeModules, info.name, {
++            get: () => loadModule(info.name, moduleID),
++          });
++        }
++      },
++    );
++  }
+ }
+ 
+ module.exports = NativeModules;
+diff --git a/node_modules/react-native/Libraries/Blob/URL.js b/node_modules/react-native/Libraries/Blob/URL.js
+index 8763926..db21ef2 100644
+--- a/node_modules/react-native/Libraries/Blob/URL.js
++++ b/node_modules/react-native/Libraries/Blob/URL.js
+@@ -8,8 +8,14 @@
+  * @flow
+  */
+ 
+-import type Blob from './Blob';
++'use strict';
+ 
++// CRITICAL: On web, capture native URL FIRST before any other code runs
++if (typeof window !== 'undefined' && !window.__NATIVE_URL__ && window.URL) {
++  window.__NATIVE_URL__ = window.URL;
++}
++
++const Blob = require('./Blob');
+ import NativeBlobModule from './NativeBlobModule';
+ 
+ let BLOB_URL_PREFIX = null;
+@@ -19,42 +25,14 @@ if (
+   typeof NativeBlobModule.getConstants().BLOB_URI_SCHEME === 'string'
+ ) {
+   const constants = NativeBlobModule.getConstants();
+-  // $FlowFixMe[incompatible-type] asserted above
+-  // $FlowFixMe[unsafe-addition]
+   BLOB_URL_PREFIX = constants.BLOB_URI_SCHEME + ':';
+   if (typeof constants.BLOB_URI_HOST === 'string') {
+     BLOB_URL_PREFIX += `//${constants.BLOB_URI_HOST}/`;
+   }
+ }
+ 
+-/**
+- * To allow Blobs be accessed via `content://` URIs,
+- * you need to register `BlobProvider` as a ContentProvider in your app's `AndroidManifest.xml`:
+- *
+- * ```xml
+- * <manifest>
+- *   <application>
+- *     <provider
+- *       android:name="com.facebook.react.modules.blob.BlobProvider"
+- *       android:authorities="@string/blob_provider_authority"
+- *       android:exported="false"
+- *     />
+- *   </application>
+- * </manifest>
+- * ```
+- * And then define the `blob_provider_authority` string in `res/values/strings.xml`.
+- * Use a dotted name that's entirely unique to your app:
+- *
+- * ```xml
+- * <resources>
+- *   <string name="blob_provider_authority">your.app.package.blobs</string>
+- * </resources>
+- * ```
+- */
+-
+-// Small subset from whatwg-url: https://github.com/jsdom/whatwg-url/tree/master/src
+-// The reference code bloat comes from Unicode issues with URLs, so those won't work here.
+-export class URLSearchParams {
++// Polyfill implementation
++class URLSearchParamsPolyfill {
+   _searchParams: Array<Array<string>> = [];
+ 
+   constructor(params: any) {
+@@ -91,8 +69,6 @@ export class URLSearchParams {
+     throw new Error('URLSearchParams.sort is not implemented');
+   }
+ 
+-  // $FlowFixMe[unsupported-syntax]
+-  // $FlowFixMe[missing-local-annot]
+   [Symbol.iterator]() {
+     return this._searchParams[Symbol.iterator]();
+   }
+@@ -115,15 +91,14 @@ export class URLSearchParams {
+ }
+ 
+ function validateBaseUrl(url: string) {
+-  // from this MIT-licensed gist: https://gist.github.com/dperini/729294
+   return /^(?:(?:(?:https?|ftp):)?\/\/)(?:(?:[1-9]\d?|1\d\d|2[01]\d|22[0-3])(?:\.(?:1?\d{1,2}|2[0-4]\d|25[0-5])){2}(?:\.(?:[1-9]\d?|1\d\d|2[0-4]\d|25[0-4]))|(?:(?:[a-z0-9\u00a1-\uffff][a-z0-9\u00a1-\uffff_-]{0,62})?[a-z0-9\u00a1-\uffff]\.)*(?:[a-z\u00a1-\uffff]{2,}\.?))(?::\d{2,5})?(?:[/?#]\S*)?$/.test(
+     url,
+   );
+ }
+ 
+-export class URL {
++class URLPolyfill {
+   _url: string;
+-  _searchParamsInstance: ?URLSearchParams = null;
++  _searchParamsInstance: ?URLSearchParamsPolyfill = null;
+ 
+   static createObjectURL(blob: Blob): string {
+     if (BLOB_URL_PREFIX === null) {
+@@ -136,8 +111,7 @@ export class URL {
+     // Do nothing.
+   }
+ 
+-  // $FlowFixMe[missing-local-annot]
+-  constructor(url: string, base: string | URL) {
++  constructor(url: string, base: string | URLPolyfill) {
+     let baseUrl = null;
+     if (!base || validateBaseUrl(url)) {
+       this._url = url;
+@@ -206,9 +180,9 @@ export class URL {
+     throw new Error('URL.search is not implemented');
+   }
+ 
+-  get searchParams(): URLSearchParams {
++  get searchParams(): URLSearchParamsPolyfill {
+     if (this._searchParamsInstance == null) {
+-      this._searchParamsInstance = new URLSearchParams();
++      this._searchParamsInstance = new URLSearchParamsPolyfill();
+     }
+     return this._searchParamsInstance;
+   }
+@@ -221,7 +195,6 @@ export class URL {
+     if (this._searchParamsInstance === null) {
+       return this._url;
+     }
+-    // $FlowFixMe[incompatible-use]
+     const instanceString = this._searchParamsInstance.toString();
+     const separator = this._url.indexOf('?') > -1 ? '&' : '?';
+     return this._url + separator + instanceString;
+@@ -231,3 +204,30 @@ export class URL {
+     throw new Error('URL.username is not implemented');
+   }
+ }
++
++// Export native if available and complete, otherwise polyfill
++// CRITICAL: On web, we MUST use native URL. Check multiple sources.
++let ExportedURL = URLPolyfill;
++let ExportedURLSearchParams = URLSearchParamsPolyfill;
++
++if (typeof window !== 'undefined') {
++  // Priority 1: Use captured native URL from web-entry.js
++  const nativeURL = window.__NATIVE_URL__ || window.URL;
++  
++  if (nativeURL) {
++    // Verify it's actually the native implementation (not our polyfill)
++    try {
++      const test = new nativeURL('http://example.com/pathname');
++      // Native URL has pathname property that works
++      if (test.pathname === '/pathname' && !('_url' in test)) {
++        ExportedURL = nativeURL;
++        ExportedURLSearchParams = window.URLSearchParams;
++      }
++    } catch (e) {
++      // Native URL test failed, will use polyfill
++    }
++  }
++}
++
++export { ExportedURL as URL };
++export { ExportedURLSearchParams as URLSearchParams };
+diff --git a/node_modules/react-native/Libraries/Components/AccessibilityInfo/AccessibilityInfo.js b/node_modules/react-native/Libraries/Components/AccessibilityInfo/AccessibilityInfo.js
+index e552e81..0e2f063 100644
+--- a/node_modules/react-native/Libraries/Components/AccessibilityInfo/AccessibilityInfo.js
++++ b/node_modules/react-native/Libraries/Components/AccessibilityInfo/AccessibilityInfo.js
+@@ -14,7 +14,7 @@ import type {ElementRef} from 'react';
+ 
+ import RCTDeviceEventEmitter from '../../EventEmitter/RCTDeviceEventEmitter';
+ import {sendAccessibilityEvent} from '../../ReactNative/RendererProxy';
+-import Platform from '../../Utilities/Platform';
++import Platform from 'react-native-web/dist/exports/Platform';
+ import legacySendAccessibilityEvent from './legacySendAccessibilityEvent';
+ import NativeAccessibilityInfoAndroid from './NativeAccessibilityInfo';
+ import NativeAccessibilityManagerIOS from './NativeAccessibilityManager';
+diff --git a/node_modules/react-native/Libraries/Components/AccessibilityInfo/legacySendAccessibilityEvent.web.js b/node_modules/react-native/Libraries/Components/AccessibilityInfo/legacySendAccessibilityEvent.web.js
+new file mode 100644
+index 0000000..06c812b
+--- /dev/null
++++ b/node_modules/react-native/Libraries/Components/AccessibilityInfo/legacySendAccessibilityEvent.web.js
+@@ -0,0 +1,14 @@
++/**
++ * Web stub for legacySendAccessibilityEvent
++ * On web, accessibility events are handled by the browser automatically
++ */
++
++function legacySendAccessibilityEvent(
++  reactTag: number,
++  eventType: string,
++): void {
++  // On web, accessibility is handled by the browser
++  // This is a no-op for web platform
++}
++
++module.exports = legacySendAccessibilityEvent;
+diff --git a/node_modules/react-native/Libraries/Components/ActivityIndicator/ActivityIndicator.js b/node_modules/react-native/Libraries/Components/ActivityIndicator/ActivityIndicator.js
+index 655d13d..0d1e505 100644
+--- a/node_modules/react-native/Libraries/Components/ActivityIndicator/ActivityIndicator.js
++++ b/node_modules/react-native/Libraries/Components/ActivityIndicator/ActivityIndicator.js
+@@ -14,7 +14,7 @@ import type {HostComponent} from '../../Renderer/shims/ReactNativeTypes';
+ import type {ViewProps} from '../View/ViewPropTypes';
+ 
+ import StyleSheet, {type ColorValue} from '../../StyleSheet/StyleSheet';
+-import Platform from '../../Utilities/Platform';
++import Platform from 'react-native-web/dist/exports/Platform';
+ import View from '../View/View';
+ import * as React from 'react';
+ 
+diff --git a/node_modules/react-native/Libraries/Components/Button.js b/node_modules/react-native/Libraries/Components/Button.js
+index 2d67452..cb41f96 100644
+--- a/node_modules/react-native/Libraries/Components/Button.js
++++ b/node_modules/react-native/Libraries/Components/Button.js
+@@ -22,7 +22,7 @@ import type {
+ 
+ import StyleSheet, {type ColorValue} from '../StyleSheet/StyleSheet';
+ import Text from '../Text/Text';
+-import Platform from '../Utilities/Platform';
++import Platform from 'react-native-web/dist/exports/Platform';
+ import TouchableNativeFeedback from './Touchable/TouchableNativeFeedback';
+ import TouchableOpacity from './Touchable/TouchableOpacity';
+ import View from './View/View';
+diff --git a/node_modules/react-native/Libraries/Components/DrawerAndroid/DrawerLayoutAndroid.android.js b/node_modules/react-native/Libraries/Components/DrawerAndroid/DrawerLayoutAndroid.android.js
+index 98b754c..351183a 100644
+--- a/node_modules/react-native/Libraries/Components/DrawerAndroid/DrawerLayoutAndroid.android.js
++++ b/node_modules/react-native/Libraries/Components/DrawerAndroid/DrawerLayoutAndroid.android.js
+@@ -19,7 +19,7 @@ import type {DirectEventHandler} from '../../Types/CodegenTypes';
+ 
+ import StyleSheet from '../../StyleSheet/StyleSheet';
+ import dismissKeyboard from '../../Utilities/dismissKeyboard';
+-import Platform from '../../Utilities/Platform';
++import Platform from 'react-native-web/dist/exports/Platform';
+ import StatusBar from '../StatusBar/StatusBar';
+ import View from '../View/View';
+ import AndroidDrawerLayoutNativeComponent, {
+diff --git a/node_modules/react-native/Libraries/Components/Keyboard/Keyboard.js b/node_modules/react-native/Libraries/Components/Keyboard/Keyboard.js
+index 8aae204..8c8085d 100644
+--- a/node_modules/react-native/Libraries/Components/Keyboard/Keyboard.js
++++ b/node_modules/react-native/Libraries/Components/Keyboard/Keyboard.js
+@@ -13,7 +13,7 @@ import type {EventSubscription} from '../../vendor/emitter/EventEmitter';
+ import NativeEventEmitter from '../../EventEmitter/NativeEventEmitter';
+ import LayoutAnimation from '../../LayoutAnimation/LayoutAnimation';
+ import dismissKeyboard from '../../Utilities/dismissKeyboard';
+-import Platform from '../../Utilities/Platform';
++import Platform from 'react-native-web/dist/exports/Platform';
+ import NativeKeyboardObserver from './NativeKeyboardObserver';
+ 
+ export type KeyboardEventName = $Keys<KeyboardEventDefinitions>;
+diff --git a/node_modules/react-native/Libraries/Components/Keyboard/KeyboardAvoidingView.js b/node_modules/react-native/Libraries/Components/Keyboard/KeyboardAvoidingView.js
+index e26d677..1ce3be3 100644
+--- a/node_modules/react-native/Libraries/Components/Keyboard/KeyboardAvoidingView.js
++++ b/node_modules/react-native/Libraries/Components/Keyboard/KeyboardAvoidingView.js
+@@ -18,7 +18,7 @@ import type {KeyboardEvent, KeyboardMetrics} from './Keyboard';
+ 
+ import LayoutAnimation from '../../LayoutAnimation/LayoutAnimation';
+ import StyleSheet from '../../StyleSheet/StyleSheet';
+-import Platform from '../../Utilities/Platform';
++import Platform from 'react-native-web/dist/exports/Platform';
+ import {type EventSubscription} from '../../vendor/emitter/EventEmitter';
+ import AccessibilityInfo from '../AccessibilityInfo/AccessibilityInfo';
+ import View from '../View/View';
+diff --git a/node_modules/react-native/Libraries/Components/Pressable/useAndroidRippleForView.js b/node_modules/react-native/Libraries/Components/Pressable/useAndroidRippleForView.js
+index 2bf4c04..5a6b66b 100644
+--- a/node_modules/react-native/Libraries/Components/Pressable/useAndroidRippleForView.js
++++ b/node_modules/react-native/Libraries/Components/Pressable/useAndroidRippleForView.js
+@@ -12,7 +12,7 @@ import type {ColorValue} from '../../StyleSheet/StyleSheet';
+ import type {PressEvent} from '../../Types/CoreEventTypes';
+ 
+ import processColor from '../../StyleSheet/processColor';
+-import Platform from '../../Utilities/Platform';
++import Platform from 'react-native-web/dist/exports/Platform';
+ import View from '../View/View';
+ import {Commands} from '../View/ViewNativeComponent';
+ import invariant from 'invariant';
+diff --git a/node_modules/react-native/Libraries/Components/RefreshControl/RefreshControl.js b/node_modules/react-native/Libraries/Components/RefreshControl/RefreshControl.js
+index 0fb4860..1ef1832 100644
+--- a/node_modules/react-native/Libraries/Components/RefreshControl/RefreshControl.js
++++ b/node_modules/react-native/Libraries/Components/RefreshControl/RefreshControl.js
+@@ -18,7 +18,7 @@ import PullToRefreshViewNativeComponent, {
+   Commands as PullToRefreshCommands,
+ } from './PullToRefreshViewNativeComponent';
+ 
+-const Platform = require('../../Utilities/Platform');
++const Platform = require('react-native-web/dist/exports/Platform');
+ const React = require('react');
+ 
+ type IOSProps = $ReadOnly<{|
+diff --git a/node_modules/react-native/Libraries/Components/SafeAreaView/SafeAreaView.js b/node_modules/react-native/Libraries/Components/SafeAreaView/SafeAreaView.js
+index a154c82..5fbbfe9 100644
+--- a/node_modules/react-native/Libraries/Components/SafeAreaView/SafeAreaView.js
++++ b/node_modules/react-native/Libraries/Components/SafeAreaView/SafeAreaView.js
+@@ -10,7 +10,7 @@
+ 
+ import type {ViewProps} from '../View/ViewPropTypes';
+ 
+-import Platform from '../../Utilities/Platform';
++import Platform from 'react-native-web/dist/exports/Platform';
+ import View from '../View/View';
+ import * as React from 'react';
+ 
+diff --git a/node_modules/react-native/Libraries/Components/ScrollView/ScrollView.js b/node_modules/react-native/Libraries/Components/ScrollView/ScrollView.js
+index fae5efa..ba66fb7 100644
+--- a/node_modules/react-native/Libraries/Components/ScrollView/ScrollView.js
++++ b/node_modules/react-native/Libraries/Components/ScrollView/ScrollView.js
+@@ -32,7 +32,7 @@ import splitLayoutProps from '../../StyleSheet/splitLayoutProps';
+ import StyleSheet from '../../StyleSheet/StyleSheet';
+ import Dimensions from '../../Utilities/Dimensions';
+ import dismissKeyboard from '../../Utilities/dismissKeyboard';
+-import Platform from '../../Utilities/Platform';
++import Platform from 'react-native-web/dist/exports/Platform';
+ import Keyboard from '../Keyboard/Keyboard';
+ import TextInputState from '../TextInput/TextInputState';
+ import View from '../View/View';
+diff --git a/node_modules/react-native/Libraries/Components/ScrollView/ScrollViewNativeComponent.js b/node_modules/react-native/Libraries/Components/ScrollView/ScrollViewNativeComponent.js
+index 69ebcef..a401e09 100644
+--- a/node_modules/react-native/Libraries/Components/ScrollView/ScrollViewNativeComponent.js
++++ b/node_modules/react-native/Libraries/Components/ScrollView/ScrollViewNativeComponent.js
+@@ -16,7 +16,7 @@ import type {ScrollViewNativeProps as Props} from './ScrollViewNativeComponentTy
+ 
+ import * as NativeComponentRegistry from '../../NativeComponent/NativeComponentRegistry';
+ import {ConditionallyIgnoredEventHandlers} from '../../NativeComponent/ViewConfigIgnore';
+-import Platform from '../../Utilities/Platform';
++import Platform from 'react-native-web/dist/exports/Platform';
+ 
+ export const __INTERNAL_VIEW_CONFIG: PartialViewConfig =
+   Platform.OS === 'android'
+diff --git a/node_modules/react-native/Libraries/Components/ScrollView/ScrollViewStickyHeader.js b/node_modules/react-native/Libraries/Components/ScrollView/ScrollViewStickyHeader.js
+index 0cdebf8..17db04a 100644
+--- a/node_modules/react-native/Libraries/Components/ScrollView/ScrollViewStickyHeader.js
++++ b/node_modules/react-native/Libraries/Components/ScrollView/ScrollViewStickyHeader.js
+@@ -13,7 +13,7 @@ import type {LayoutEvent} from '../../Types/CoreEventTypes';
+ import Animated from '../../Animated/Animated';
+ import {isPublicInstance as isFabricPublicInstance} from '../../ReactNative/ReactFabricPublicInstance/ReactFabricPublicInstanceUtils';
+ import StyleSheet from '../../StyleSheet/StyleSheet';
+-import Platform from '../../Utilities/Platform';
++import Platform from 'react-native-web/dist/exports/Platform';
+ import useMergeRefs from '../../Utilities/useMergeRefs';
+ import * as React from 'react';
+ import {useCallback, useEffect, useMemo, useRef, useState} from 'react';
+diff --git a/node_modules/react-native/Libraries/Components/ScrollView/processDecelerationRate.js b/node_modules/react-native/Libraries/Components/ScrollView/processDecelerationRate.js
+index 72a5a06..357f268 100644
+--- a/node_modules/react-native/Libraries/Components/ScrollView/processDecelerationRate.js
++++ b/node_modules/react-native/Libraries/Components/ScrollView/processDecelerationRate.js
+@@ -8,7 +8,7 @@
+  * @flow strict-local
+  */
+ 
+-import Platform from '../../Utilities/Platform';
++import Platform from 'react-native-web/dist/exports/Platform';
+ 
+ function processDecelerationRate(
+   decelerationRate: number | 'normal' | 'fast',
+diff --git a/node_modules/react-native/Libraries/Components/StatusBar/StatusBar.js b/node_modules/react-native/Libraries/Components/StatusBar/StatusBar.js
+index 2ac3d1f..902213a 100644
+--- a/node_modules/react-native/Libraries/Components/StatusBar/StatusBar.js
++++ b/node_modules/react-native/Libraries/Components/StatusBar/StatusBar.js
+@@ -11,7 +11,7 @@
+ import type {ColorValue} from '../../StyleSheet/StyleSheet';
+ 
+ import processColor from '../../StyleSheet/processColor';
+-import Platform from '../../Utilities/Platform';
++import Platform from 'react-native-web/dist/exports/Platform';
+ import NativeStatusBarManagerAndroid from './NativeStatusBarManagerAndroid';
+ import NativeStatusBarManagerIOS from './NativeStatusBarManagerIOS';
+ import invariant from 'invariant';
+diff --git a/node_modules/react-native/Libraries/Components/Switch/Switch.js b/node_modules/react-native/Libraries/Components/Switch/Switch.js
+index 24f3b84..9b20027 100644
+--- a/node_modules/react-native/Libraries/Components/Switch/Switch.js
++++ b/node_modules/react-native/Libraries/Components/Switch/Switch.js
+@@ -14,7 +14,7 @@ import type {SyntheticEvent} from '../../Types/CoreEventTypes';
+ import type {ViewProps} from '../View/ViewPropTypes';
+ 
+ import StyleSheet from '../../StyleSheet/StyleSheet';
+-import Platform from '../../Utilities/Platform';
++import Platform from 'react-native-web/dist/exports/Platform';
+ import useMergeRefs from '../../Utilities/useMergeRefs';
+ import AndroidSwitchNativeComponent, {
+   Commands as AndroidSwitchCommands,
+diff --git a/node_modules/react-native/Libraries/Components/TextInput/InputAccessoryView.js b/node_modules/react-native/Libraries/Components/TextInput/InputAccessoryView.js
+index 7924747..fd958f5 100644
+--- a/node_modules/react-native/Libraries/Components/TextInput/InputAccessoryView.js
++++ b/node_modules/react-native/Libraries/Components/TextInput/InputAccessoryView.js
+@@ -12,7 +12,7 @@ import StyleSheet, {
+   type ColorValue,
+   type ViewStyleProp,
+ } from '../../StyleSheet/StyleSheet';
+-import Platform from '../../Utilities/Platform';
++import Platform from 'react-native-web/dist/exports/Platform';
+ import RCTInputAccessoryViewNativeComponent from './RCTInputAccessoryViewNativeComponent';
+ import * as React from 'react';
+ 
+diff --git a/node_modules/react-native/Libraries/Components/TextInput/TextInput.js b/node_modules/react-native/Libraries/Components/TextInput/TextInput.js
+index 481938f..b002073 100644
+--- a/node_modules/react-native/Libraries/Components/TextInput/TextInput.js
++++ b/node_modules/react-native/Libraries/Components/TextInput/TextInput.js
+@@ -26,7 +26,7 @@ import StyleSheet, {
+ } from '../../StyleSheet/StyleSheet';
+ import Text from '../../Text/Text';
+ import TextAncestor from '../../Text/TextAncestor';
+-import Platform from '../../Utilities/Platform';
++import Platform from 'react-native-web/dist/exports/Platform';
+ import useMergeRefs from '../../Utilities/useMergeRefs';
+ import TextInputState from './TextInputState';
+ import invariant from 'invariant';
+diff --git a/node_modules/react-native/Libraries/Components/TextInput/TextInputState.js b/node_modules/react-native/Libraries/Components/TextInput/TextInputState.js
+index 9a38143..7d3d109 100644
+--- a/node_modules/react-native/Libraries/Components/TextInput/TextInputState.js
++++ b/node_modules/react-native/Libraries/Components/TextInput/TextInputState.js
+@@ -23,7 +23,7 @@ import {Commands as AndroidTextInputCommands} from '../../Components/TextInput/A
+ import {Commands as iOSTextInputCommands} from '../../Components/TextInput/RCTSingelineTextInputNativeComponent';
+ 
+ const {findNodeHandle} = require('../../ReactNative/RendererProxy');
+-const Platform = require('../../Utilities/Platform');
++const Platform = require('react-native-web/dist/exports/Platform');
+ const React = require('react');
+ type ComponentRef = React.ElementRef<HostComponent<mixed>>;
+ 
+diff --git a/node_modules/react-native/Libraries/Components/TextInput/TextInputState.js.backup b/node_modules/react-native/Libraries/Components/TextInput/TextInputState.js.backup
+new file mode 100644
+index 0000000..9a38143
+--- /dev/null
++++ b/node_modules/react-native/Libraries/Components/TextInput/TextInputState.js.backup
+@@ -0,0 +1,214 @@
++/**
++ * Copyright (c) Meta Platforms, Inc. and affiliates.
++ *
++ * This source code is licensed under the MIT license found in the
++ * LICENSE file in the root directory of this source tree.
++ *
++ * @format
++ * @flow strict-local
++ */
++
++// This class is responsible for coordinating the "focused" state for
++// TextInputs. All calls relating to the keyboard should be funneled
++// through here.
++
++import type {
++  HostComponent,
++  MeasureInWindowOnSuccessCallback,
++  MeasureLayoutOnSuccessCallback,
++  MeasureOnSuccessCallback,
++} from '../../Renderer/shims/ReactNativeTypes';
++
++import {Commands as AndroidTextInputCommands} from '../../Components/TextInput/AndroidTextInputNativeComponent';
++import {Commands as iOSTextInputCommands} from '../../Components/TextInput/RCTSingelineTextInputNativeComponent';
++
++const {findNodeHandle} = require('../../ReactNative/RendererProxy');
++const Platform = require('../../Utilities/Platform');
++const React = require('react');
++type ComponentRef = React.ElementRef<HostComponent<mixed>>;
++
++let currentlyFocusedInputRef: ?ComponentRef = null;
++const inputs = new Set<{
++  blur(): void,
++  focus(): void,
++  measure(callback: MeasureOnSuccessCallback): void,
++  measureInWindow(callback: MeasureInWindowOnSuccessCallback): void,
++  measureLayout(
++    relativeToNativeNode: number | React.ElementRef<HostComponent<mixed>>,
++    onSuccess: MeasureLayoutOnSuccessCallback,
++    onFail?: () => void,
++  ): void,
++  setNativeProps(nativeProps: {...}): void,
++}>();
++
++function currentlyFocusedInput(): ?ComponentRef {
++  return currentlyFocusedInputRef;
++}
++
++/**
++ * Returns the ID of the currently focused text field, if one exists
++ * If no text field is focused it returns null
++ */
++function currentlyFocusedField(): ?number {
++  if (__DEV__) {
++    console.error(
++      'currentlyFocusedField is deprecated and will be removed in a future release. Use currentlyFocusedInput',
++    );
++  }
++
++  return findNodeHandle(currentlyFocusedInputRef);
++}
++
++function focusInput(textField: ?ComponentRef): void {
++  if (currentlyFocusedInputRef !== textField && textField != null) {
++    currentlyFocusedInputRef = textField;
++  }
++}
++
++function blurInput(textField: ?ComponentRef): void {
++  if (currentlyFocusedInputRef === textField && textField != null) {
++    currentlyFocusedInputRef = null;
++  }
++}
++
++function focusField(textFieldID: ?number): void {
++  if (__DEV__) {
++    console.error('focusField no longer works. Use focusInput');
++  }
++
++  return;
++}
++
++function blurField(textFieldID: ?number) {
++  if (__DEV__) {
++    console.error('blurField no longer works. Use blurInput');
++  }
++
++  return;
++}
++
++/**
++ * @param {number} TextInputID id of the text field to focus
++ * Focuses the specified text field
++ * noop if the text field was already focused or if the field is not editable
++ */
++function focusTextInput(textField: ?ComponentRef) {
++  if (typeof textField === 'number') {
++    if (__DEV__) {
++      console.error(
++        'focusTextInput must be called with a host component. Passing a react tag is deprecated.',
++      );
++    }
++
++    return;
++  }
++
++  if (textField != null) {
++    const fieldCanBeFocused =
++      currentlyFocusedInputRef !== textField &&
++      // $FlowFixMe - `currentProps` is missing in `NativeMethods`
++      textField.currentProps?.editable !== false;
++
++    if (!fieldCanBeFocused) {
++      return;
++    }
++    focusInput(textField);
++    if (Platform.OS === 'ios') {
++      // This isn't necessarily a single line text input
++      // But commands don't actually care as long as the thing being passed in
++      // actually has a command with that name. So this should work with single
++      // and multiline text inputs. Ideally we'll merge them into one component
++      // in the future.
++      iOSTextInputCommands.focus(textField);
++    } else if (Platform.OS === 'android') {
++      AndroidTextInputCommands.focus(textField);
++    }
++  }
++}
++
++/**
++ * @param {number} textFieldID id of the text field to unfocus
++ * Unfocuses the specified text field
++ * noop if it wasn't focused
++ */
++function blurTextInput(textField: ?ComponentRef) {
++  if (typeof textField === 'number') {
++    if (__DEV__) {
++      console.error(
++        'blurTextInput must be called with a host component. Passing a react tag is deprecated.',
++      );
++    }
++
++    return;
++  }
++
++  if (currentlyFocusedInputRef === textField && textField != null) {
++    blurInput(textField);
++    if (Platform.OS === 'ios') {
++      // This isn't necessarily a single line text input
++      // But commands don't actually care as long as the thing being passed in
++      // actually has a command with that name. So this should work with single
++      // and multiline text inputs. Ideally we'll merge them into one component
++      // in the future.
++      iOSTextInputCommands.blur(textField);
++    } else if (Platform.OS === 'android') {
++      AndroidTextInputCommands.blur(textField);
++    }
++  }
++}
++
++function registerInput(textField: ComponentRef) {
++  if (typeof textField === 'number') {
++    if (__DEV__) {
++      console.error(
++        'registerInput must be called with a host component. Passing a react tag is deprecated.',
++      );
++    }
++
++    return;
++  }
++
++  inputs.add(textField);
++}
++
++function unregisterInput(textField: ComponentRef) {
++  if (typeof textField === 'number') {
++    if (__DEV__) {
++      console.error(
++        'unregisterInput must be called with a host component. Passing a react tag is deprecated.',
++      );
++    }
++
++    return;
++  }
++  inputs.delete(textField);
++}
++
++function isTextInput(textField: ComponentRef): boolean {
++  if (typeof textField === 'number') {
++    if (__DEV__) {
++      console.error(
++        'isTextInput must be called with a host component. Passing a react tag is deprecated.',
++      );
++    }
++
++    return false;
++  }
++
++  return inputs.has(textField);
++}
++
++module.exports = {
++  currentlyFocusedInput,
++  focusInput,
++  blurInput,
++
++  currentlyFocusedField,
++  focusField,
++  blurField,
++  focusTextInput,
++  blurTextInput,
++  registerInput,
++  unregisterInput,
++  isTextInput,
++};
+diff --git a/node_modules/react-native/Libraries/Components/Touchable/Touchable.js b/node_modules/react-native/Libraries/Components/Touchable/Touchable.js
+index 50c9b8f..e2c8dc0 100644
+--- a/node_modules/react-native/Libraries/Components/Touchable/Touchable.js
++++ b/node_modules/react-native/Libraries/Components/Touchable/Touchable.js
+@@ -15,7 +15,7 @@ import type {TouchableType} from './Touchable.flow';
+ 
+ import {PressabilityDebugView} from '../../Pressability/PressabilityDebug';
+ import UIManager from '../../ReactNative/UIManager';
+-import Platform from '../../Utilities/Platform';
++import Platform from 'react-native-web/dist/exports/Platform';
+ import SoundManager from '../Sound/SoundManager';
+ import BoundingDimensions from './BoundingDimensions';
+ import Position from './Position';
+diff --git a/node_modules/react-native/Libraries/Components/Touchable/TouchableBounce.js b/node_modules/react-native/Libraries/Components/Touchable/TouchableBounce.js
+index 4fcbe80..2b134d7 100644
+--- a/node_modules/react-native/Libraries/Components/Touchable/TouchableBounce.js
++++ b/node_modules/react-native/Libraries/Components/Touchable/TouchableBounce.js
+@@ -16,7 +16,7 @@ import Pressability, {
+   type PressabilityConfig,
+ } from '../../Pressability/Pressability';
+ import {PressabilityDebugView} from '../../Pressability/PressabilityDebug';
+-import Platform from '../../Utilities/Platform';
++import Platform from 'react-native-web/dist/exports/Platform';
+ import * as React from 'react';
+ 
+ type Props = $ReadOnly<{|
+diff --git a/node_modules/react-native/Libraries/Components/Touchable/TouchableHighlight.js b/node_modules/react-native/Libraries/Components/Touchable/TouchableHighlight.js
+index 998a7d0..b5851c5 100644
+--- a/node_modules/react-native/Libraries/Components/Touchable/TouchableHighlight.js
++++ b/node_modules/react-native/Libraries/Components/Touchable/TouchableHighlight.js
+@@ -17,7 +17,7 @@ import Pressability, {
+ } from '../../Pressability/Pressability';
+ import {PressabilityDebugView} from '../../Pressability/PressabilityDebug';
+ import StyleSheet, {type ViewStyleProp} from '../../StyleSheet/StyleSheet';
+-import Platform from '../../Utilities/Platform';
++import Platform from 'react-native-web/dist/exports/Platform';
+ import * as React from 'react';
+ 
+ type AndroidProps = $ReadOnly<{|
+diff --git a/node_modules/react-native/Libraries/Components/Touchable/TouchableNativeFeedback.js b/node_modules/react-native/Libraries/Components/Touchable/TouchableNativeFeedback.js
+index 5c5aa5a..6378031 100644
+--- a/node_modules/react-native/Libraries/Components/Touchable/TouchableNativeFeedback.js
++++ b/node_modules/react-native/Libraries/Components/Touchable/TouchableNativeFeedback.js
+@@ -18,7 +18,7 @@ import Pressability, {
+ import {PressabilityDebugView} from '../../Pressability/PressabilityDebug';
+ import {findHostInstance_DEPRECATED} from '../../ReactNative/RendererProxy';
+ import processColor from '../../StyleSheet/processColor';
+-import Platform from '../../Utilities/Platform';
++import Platform from 'react-native-web/dist/exports/Platform';
+ import {Commands} from '../View/ViewNativeComponent';
+ import invariant from 'invariant';
+ import * as React from 'react';
+diff --git a/node_modules/react-native/Libraries/Components/Touchable/TouchableOpacity.js b/node_modules/react-native/Libraries/Components/Touchable/TouchableOpacity.js
+index 95b3787..74395cf 100644
+--- a/node_modules/react-native/Libraries/Components/Touchable/TouchableOpacity.js
++++ b/node_modules/react-native/Libraries/Components/Touchable/TouchableOpacity.js
+@@ -18,7 +18,7 @@ import Pressability, {
+ } from '../../Pressability/Pressability';
+ import {PressabilityDebugView} from '../../Pressability/PressabilityDebug';
+ import flattenStyle from '../../StyleSheet/flattenStyle';
+-import Platform from '../../Utilities/Platform';
++import Platform from 'react-native-web/dist/exports/Platform';
+ import * as React from 'react';
+ 
+ type TVProps = $ReadOnly<{|
+diff --git a/node_modules/react-native/Libraries/Components/TraceUpdateOverlay/TraceUpdateOverlay.js b/node_modules/react-native/Libraries/Components/TraceUpdateOverlay/TraceUpdateOverlay.js
+index abac38b..b60224b 100644
+--- a/node_modules/react-native/Libraries/Components/TraceUpdateOverlay/TraceUpdateOverlay.js
++++ b/node_modules/react-native/Libraries/Components/TraceUpdateOverlay/TraceUpdateOverlay.js
+@@ -13,7 +13,7 @@ import type {Overlay} from './TraceUpdateOverlayNativeComponent';
+ import UIManager from '../../ReactNative/UIManager';
+ import processColor from '../../StyleSheet/processColor';
+ import StyleSheet from '../../StyleSheet/StyleSheet';
+-import Platform from '../../Utilities/Platform';
++import Platform from 'react-native-web/dist/exports/Platform';
+ import View from '../View/View';
+ import TraceUpdateOverlayNativeComponent, {
+   Commands,
+diff --git a/node_modules/react-native/Libraries/Components/View/ViewNativeComponent.js b/node_modules/react-native/Libraries/Components/View/ViewNativeComponent.js
+index df119f6..7559cb9 100644
+--- a/node_modules/react-native/Libraries/Components/View/ViewNativeComponent.js
++++ b/node_modules/react-native/Libraries/Components/View/ViewNativeComponent.js
+@@ -15,7 +15,7 @@ import type {
+ 
+ import * as NativeComponentRegistry from '../../NativeComponent/NativeComponentRegistry';
+ import codegenNativeCommands from '../../Utilities/codegenNativeCommands';
+-import Platform from '../../Utilities/Platform';
++import Platform from 'react-native-web/dist/exports/Platform';
+ import {type ViewProps as Props} from './ViewPropTypes';
+ import * as React from 'react';
+ 
+diff --git a/node_modules/react-native/Libraries/Core/Devtools/loadBundleFromServer.js b/node_modules/react-native/Libraries/Core/Devtools/loadBundleFromServer.js
+index f8387cd..ab4575e 100644
+--- a/node_modules/react-native/Libraries/Core/Devtools/loadBundleFromServer.js
++++ b/node_modules/react-native/Libraries/Core/Devtools/loadBundleFromServer.js
+@@ -9,7 +9,10 @@
+  * @oncall react_native
+  */
+ 
+-import Networking from '../../Network/RCTNetworking';
++import Platform from 'react-native-web/dist/exports/Platform';
++const Networking = Platform.OS === 'web' 
++  ? require('../../Network/RCTNetworking.web')
++  : require('../../Network/RCTNetworking');
+ import HMRClient from '../../Utilities/HMRClient';
+ import LoadingView from '../../Utilities/LoadingView';
+ import getDevServer from './getDevServer';
+diff --git a/node_modules/react-native/Libraries/Core/InitializeCore.js b/node_modules/react-native/Libraries/Core/InitializeCore.js
+index 25377f6..22b0a9c 100644
+--- a/node_modules/react-native/Libraries/Core/InitializeCore.js
++++ b/node_modules/react-native/Libraries/Core/InitializeCore.js
+@@ -34,6 +34,19 @@ require('./polyfillPromise');
+ require('./setUpRegeneratorRuntime');
+ require('./setUpTimers');
+ require('./setUpXHR');
++
++// CRITICAL FIX: Restore native URL and WebSocket if they were overwritten on web
++if (typeof window !== 'undefined') {
++  if (window.__NATIVE_URL__) {
++    global.URL = window.__NATIVE_URL__;
++    window.URL = window.__NATIVE_URL__;
++  }
++  if (window.__NATIVE_WEBSOCKET__) {
++    global.WebSocket = window.__NATIVE_WEBSOCKET__;
++    window.WebSocket = window.__NATIVE_WEBSOCKET__;
++  }
++}
++
+ require('./setUpAlert');
+ require('./setUpNavigator');
+ require('./setUpBatchedBridge');
+diff --git a/node_modules/react-native/Libraries/Core/NativeExceptionsManager.js b/node_modules/react-native/Libraries/Core/NativeExceptionsManager.js
+index aac86e0..8ea63d6 100644
+--- a/node_modules/react-native/Libraries/Core/NativeExceptionsManager.js
++++ b/node_modules/react-native/Libraries/Core/NativeExceptionsManager.js
+@@ -12,7 +12,7 @@ import type {TurboModule} from '../TurboModule/RCTExport';
+ 
+ import * as TurboModuleRegistry from '../TurboModule/TurboModuleRegistry';
+ 
+-const Platform = require('../Utilities/Platform');
++const Platform = require('react-native-web/dist/exports/Platform');
+ 
+ export type StackFrame = {|
+   column: ?number,
+diff --git a/node_modules/react-native/Libraries/Core/ReactNativeVersionCheck.js b/node_modules/react-native/Libraries/Core/ReactNativeVersionCheck.js
+index a9e1bc4..b7d7b4e 100644
+--- a/node_modules/react-native/Libraries/Core/ReactNativeVersionCheck.js
++++ b/node_modules/react-native/Libraries/Core/ReactNativeVersionCheck.js
+@@ -8,7 +8,7 @@
+  * @format
+  */
+ 
+-import Platform from '../Utilities/Platform';
++import Platform from 'react-native-web/dist/exports/Platform';
+ 
+ const ReactNativeVersion = require('./ReactNativeVersion');
+ 
+@@ -22,7 +22,8 @@ const ReactNativeVersion = require('./ReactNativeVersion');
+  * and rely on its existence as a separate module.
+  */
+ exports.checkVersions = function checkVersions(): void {
+-  const nativeVersion = Platform.constants.reactNativeVersion;
++  // On web, use JS version if constants.reactNativeVersion is not available
++  const nativeVersion = Platform.constants?.reactNativeVersion || ReactNativeVersion.version;
+   if (
+     ReactNativeVersion.version.major !== nativeVersion.major ||
+     ReactNativeVersion.version.minor !== nativeVersion.minor
+diff --git a/node_modules/react-native/Libraries/Core/setUpDeveloperTools.js b/node_modules/react-native/Libraries/Core/setUpDeveloperTools.js
+index 6722719..debcf84 100644
+--- a/node_modules/react-native/Libraries/Core/setUpDeveloperTools.js
++++ b/node_modules/react-native/Libraries/Core/setUpDeveloperTools.js
+@@ -8,7 +8,7 @@
+  * @format
+  */
+ 
+-import Platform from '../Utilities/Platform';
++import Platform from 'react-native-web/dist/exports/Platform';
+ 
+ declare var console: {[string]: $FlowFixMe};
+ 
+diff --git a/node_modules/react-native/Libraries/Core/setUpErrorHandling.js b/node_modules/react-native/Libraries/Core/setUpErrorHandling.js
+index 32846d4..ceb24f5 100644
+--- a/node_modules/react-native/Libraries/Core/setUpErrorHandling.js
++++ b/node_modules/react-native/Libraries/Core/setUpErrorHandling.js
+@@ -29,5 +29,17 @@ if (!global.__fbDisableExceptionsManager) {
+   };
+ 
+   const ErrorUtils = require('../vendor/core/ErrorUtils');
+-  ErrorUtils.setGlobalHandler(handleError);
++  if (ErrorUtils && ErrorUtils.setGlobalHandler) {
++    ErrorUtils.setGlobalHandler(handleError);
++  } else {
++    // Fallback for web if ErrorUtils is not available
++    if (typeof window !== 'undefined') {
++      window.onerror = (message, source, lineno, colno, error) => {
++        handleError(error || new Error(message), false);
++      };
++      window.onunhandledrejection = (event) => {
++        handleError(event.reason, false);
++      };
++    }
++  }
+ }
+diff --git a/node_modules/react-native/Libraries/Core/setUpReactDevTools.js b/node_modules/react-native/Libraries/Core/setUpReactDevTools.js
+index ecdd14a..9eb24ba 100644
+--- a/node_modules/react-native/Libraries/Core/setUpReactDevTools.js
++++ b/node_modules/react-native/Libraries/Core/setUpReactDevTools.js
+@@ -62,7 +62,10 @@ if (__DEV__) {
+       });
+ 
+       const ReactNativeStyleAttributes = require('../Components/View/ReactNativeStyleAttributes');
+-      const devToolsSettingsManager = require('../DevToolsSettings/DevToolsSettingsManager');
++      const Platform = require('react-native-web/dist/exports/Platform');
++      const devToolsSettingsManager = Platform.OS === 'web' 
++        ? require('../DevToolsSettings/DevToolsSettingsManager.web')
++        : require('../DevToolsSettings/DevToolsSettingsManager');
+ 
+       reactDevTools.connectToDevTools({
+         isAppActive,
+diff --git a/node_modules/react-native/Libraries/Core/setUpTimers.js b/node_modules/react-native/Libraries/Core/setUpTimers.js
+index 86d7386..21aa0b1 100644
+--- a/node_modules/react-native/Libraries/Core/setUpTimers.js
++++ b/node_modules/react-native/Libraries/Core/setUpTimers.js
+@@ -10,94 +10,107 @@
+ 
+ 'use strict';
+ 
+-const {isNativeFunction} = require('../Utilities/FeatureDetection');
+-const {polyfillGlobal} = require('../Utilities/PolyfillFunctions');
++// CRITICAL FIX FOR WEB:
++// On web, we MUST NOT polyfill timers because browsers already provide them.
++// Polyfilling them breaks Expo/Metro because it replaces the native functions
++// with RN's scheduler which depends on the native bridge (which doesn't exist on web).
++// We check for window/document to detect web environment reliably.
++const isWeb = typeof window !== 'undefined' && typeof document !== 'undefined';
+ 
+-if (__DEV__) {
+-  if (typeof global.Promise !== 'function') {
+-    console.error('Promise should exist before setting up timers.');
++if (isWeb) {
++  // On web, do absolutely nothing. Leave native timers alone.
++  module.exports = {};
++} else {
++  // Original RN code for native platforms
++  const {isNativeFunction} = require('../Utilities/FeatureDetection');
++  const {polyfillGlobal} = require('../Utilities/PolyfillFunctions');
++
++  if (__DEV__) {
++    if (typeof global.Promise !== 'function') {
++      console.error('Promise should exist before setting up timers.');
++    }
+   }
+-}
+ 
+-// Currently, Hermes `Promise` is implemented via Internal Bytecode.
+-const hasHermesPromiseQueuedToJSVM =
+-  global.HermesInternal?.hasPromise?.() === true &&
+-  global.HermesInternal?.useEngineQueue?.() === true;
++  // Currently, Hermes `Promise` is implemented via Internal Bytecode.
++  const hasHermesPromiseQueuedToJSVM =
++    global.HermesInternal?.hasPromise?.() === true &&
++    global.HermesInternal?.useEngineQueue?.() === true;
+ 
+-const hasNativePromise = isNativeFunction(Promise);
+-const hasPromiseQueuedToJSVM = hasNativePromise || hasHermesPromiseQueuedToJSVM;
++  const hasNativePromise = isNativeFunction(Promise);
++  const hasPromiseQueuedToJSVM = hasNativePromise || hasHermesPromiseQueuedToJSVM;
++
++  // In bridgeless mode, timers are host functions installed from cpp.
++  if (global.RN$Bridgeless !== true) {
++    /**
++     * Set up timers.
++     * You can use this module directly, or just require InitializeCore.
++     */
++    const defineLazyTimer = (
++      name:
++        | $TEMPORARY$string<'cancelAnimationFrame'>
++        | $TEMPORARY$string<'cancelIdleCallback'>
++        | $TEMPORARY$string<'clearInterval'>
++        | $TEMPORARY$string<'clearTimeout'>
++        | $TEMPORARY$string<'requestAnimationFrame'>
++        | $TEMPORARY$string<'requestIdleCallback'>
++        | $TEMPORARY$string<'setInterval'>
++        | $TEMPORARY$string<'setTimeout'>,
++    ) => {
++      polyfillGlobal(name, () => require('./Timers/JSTimers')[name]);
++    };
++    defineLazyTimer('setTimeout');
++    defineLazyTimer('clearTimeout');
++    defineLazyTimer('setInterval');
++    defineLazyTimer('clearInterval');
++    defineLazyTimer('requestAnimationFrame');
++    defineLazyTimer('cancelAnimationFrame');
++    defineLazyTimer('requestIdleCallback');
++    defineLazyTimer('cancelIdleCallback');
++  }
+ 
+-// In bridgeless mode, timers are host functions installed from cpp.
+-if (global.RN$Bridgeless !== true) {
+   /**
+-   * Set up timers.
+-   * You can use this module directly, or just require InitializeCore.
++   * Set up immediate APIs, which is required to use the same microtask queue
++   * as the Promise.
+    */
+-  const defineLazyTimer = (
+-    name:
+-      | $TEMPORARY$string<'cancelAnimationFrame'>
+-      | $TEMPORARY$string<'cancelIdleCallback'>
+-      | $TEMPORARY$string<'clearInterval'>
+-      | $TEMPORARY$string<'clearTimeout'>
+-      | $TEMPORARY$string<'requestAnimationFrame'>
+-      | $TEMPORARY$string<'requestIdleCallback'>
+-      | $TEMPORARY$string<'setInterval'>
+-      | $TEMPORARY$string<'setTimeout'>,
+-  ) => {
+-    polyfillGlobal(name, () => require('./Timers/JSTimers')[name]);
+-  };
+-  defineLazyTimer('setTimeout');
+-  defineLazyTimer('clearTimeout');
+-  defineLazyTimer('setInterval');
+-  defineLazyTimer('clearInterval');
+-  defineLazyTimer('requestAnimationFrame');
+-  defineLazyTimer('cancelAnimationFrame');
+-  defineLazyTimer('requestIdleCallback');
+-  defineLazyTimer('cancelIdleCallback');
+-}
+-
+-/**
+- * Set up immediate APIs, which is required to use the same microtask queue
+- * as the Promise.
+- */
+-if (hasPromiseQueuedToJSVM) {
+-  // When promise queues to the JSVM microtasks queue, we shim the immediate
+-  // APIs via `queueMicrotask` to maintain the backward compatibility.
+-  polyfillGlobal(
+-    'setImmediate',
+-    () => require('./Timers/immediateShim').setImmediate,
+-  );
+-  polyfillGlobal(
+-    'clearImmediate',
+-    () => require('./Timers/immediateShim').clearImmediate,
+-  );
+-} else {
+-  // When promise was polyfilled hence is queued to the RN microtask queue,
+-  // we polyfill the immediate APIs as aliases to the ReactNativeMicrotask APIs.
+-  // Note that in bridgeless mode, immediate APIs are installed from cpp.
+-  if (global.RN$Bridgeless !== true) {
++  if (hasPromiseQueuedToJSVM) {
++    // When promise queues to the JSVM microtasks queue, we shim the immediate
++    // APIs via `queueMicrotask` to maintain the backward compatibility.
+     polyfillGlobal(
+       'setImmediate',
+-      () => require('./Timers/JSTimers').queueReactNativeMicrotask,
++      () => require('./Timers/immediateShim').setImmediate,
+     );
+     polyfillGlobal(
+       'clearImmediate',
+-      () => require('./Timers/JSTimers').clearReactNativeMicrotask,
++      () => require('./Timers/immediateShim').clearImmediate,
+     );
++  } else {
++    // When promise was polyfilled hence is queued to the RN microtask queue,
++    // we polyfill the immediate APIs as aliases to the ReactNativeMicrotask APIs.
++    // Note that in bridgeless mode, immediate APIs are installed from cpp.
++    if (global.RN$Bridgeless !== true) {
++      polyfillGlobal(
++        'setImmediate',
++        () => require('./Timers/JSTimers').queueReactNativeMicrotask,
++      );
++      polyfillGlobal(
++        'clearImmediate',
++        () => require('./Timers/JSTimers').clearReactNativeMicrotask,
++      );
++    }
+   }
+-}
+ 
+-/**
+- * Set up the microtask queueing API, which is required to use the same
+- * microtask queue as the Promise.
+- */
+-if (hasHermesPromiseQueuedToJSVM) {
+-  // Fast path for Hermes.
+-  polyfillGlobal('queueMicrotask', () => global.HermesInternal?.enqueueJob);
+-} else {
+-  // Polyfill it with promise (regardless it's polyfilled or native) otherwise.
+-  polyfillGlobal(
+-    'queueMicrotask',
+-    () => require('./Timers/queueMicrotask.js').default,
+-  );
++  /**
++   * Set up the microtask queueing API, which is required to use the same
++   * microtask queue as the Promise.
++   */
++  if (hasHermesPromiseQueuedToJSVM) {
++    // Fast path for Hermes.
++    polyfillGlobal('queueMicrotask', () => global.HermesInternal?.enqueueJob);
++  } else {
++    // Polyfill it with promise (regardless it's polyfilled or native) otherwise.
++    polyfillGlobal(
++      'queueMicrotask',
++      () => require('./Timers/queueMicrotask.js').default,
++    );
++  }
+ }
+diff --git a/node_modules/react-native/Libraries/Core/setUpXHR.js b/node_modules/react-native/Libraries/Core/setUpXHR.js
+index a31f22d..f622ae3 100644
+--- a/node_modules/react-native/Libraries/Core/setUpXHR.js
++++ b/node_modules/react-native/Libraries/Core/setUpXHR.js
+@@ -12,30 +12,45 @@
+ 
+ const {polyfillGlobal} = require('../Utilities/PolyfillFunctions');
+ 
++// CRITICAL FIX FOR WEB:
++// On web, we MUST NOT polyfill these APIs because browsers already provide them.
++// Polyfilling them breaks them or causes "not implemented" errors.
++let isWeb = false;
++try {
++  const Platform = require('react-native-web/dist/exports/Platform');
++  isWeb = Platform.OS === 'web';
++} catch (e) {
++  // Platform not available, check environment directly
++  isWeb = typeof window !== 'undefined' && typeof document !== 'undefined';
++}
++
+ /**
+  * Set up XMLHttpRequest. The native XMLHttpRequest in Chrome dev tools is CORS
+  * aware and won't let you fetch anything from the internet.
+  *
+  * You can use this module directly, or just require InitializeCore.
+  */
+-polyfillGlobal('XMLHttpRequest', () => require('../Network/XMLHttpRequest'));
+-polyfillGlobal('FormData', () => require('../Network/FormData'));
+ 
+-polyfillGlobal('fetch', () => require('../Network/fetch').fetch);
+-polyfillGlobal('Headers', () => require('../Network/fetch').Headers);
+-polyfillGlobal('Request', () => require('../Network/fetch').Request);
+-polyfillGlobal('Response', () => require('../Network/fetch').Response);
+-polyfillGlobal('WebSocket', () => require('../WebSocket/WebSocket'));
+-polyfillGlobal('Blob', () => require('../Blob/Blob'));
+-polyfillGlobal('File', () => require('../Blob/File'));
+-polyfillGlobal('FileReader', () => require('../Blob/FileReader'));
+-polyfillGlobal('URL', () => require('../Blob/URL').URL); // flowlint-line untyped-import:off
+-polyfillGlobal('URLSearchParams', () => require('../Blob/URL').URLSearchParams); // flowlint-line untyped-import:off
+-polyfillGlobal(
+-  'AbortController',
+-  () => require('abort-controller/dist/abort-controller').AbortController, // flowlint-line untyped-import:off
+-);
+-polyfillGlobal(
+-  'AbortSignal',
+-  () => require('abort-controller/dist/abort-controller').AbortSignal, // flowlint-line untyped-import:off
+-);
++// On web, browser already has these - don't override
++if (!isWeb) {
++  polyfillGlobal('XMLHttpRequest', () => require('../Network/XMLHttpRequest'));
++  polyfillGlobal('FormData', () => require('../Network/FormData'));
++  polyfillGlobal('fetch', () => require('../Network/fetch').fetch);
++  polyfillGlobal('Headers', () => require('../Network/fetch').Headers);
++  polyfillGlobal('Request', () => require('../Network/fetch').Request);
++  polyfillGlobal('Response', () => require('../Network/fetch').Response);
++  polyfillGlobal('WebSocket', () => require('../WebSocket/WebSocket'));
++  polyfillGlobal('Blob', () => require('../Blob/Blob'));
++  polyfillGlobal('File', () => require('../Blob/File'));
++  polyfillGlobal('FileReader', () => require('../Blob/FileReader'));
++  polyfillGlobal('URL', () => require('../Blob/URL').URL); // flowlint-line untyped-import:off
++  polyfillGlobal('URLSearchParams', () => require('../Blob/URL').URLSearchParams); // flowlint-line untyped-import:off
++  polyfillGlobal(
++    'AbortController',
++    () => require('abort-controller/dist/abort-controller').AbortController, // flowlint-line untyped-import:off
++  );
++  polyfillGlobal(
++    'AbortSignal',
++    () => require('abort-controller/dist/abort-controller').AbortSignal, // flowlint-line untyped-import:off
++  );
++}
+diff --git a/node_modules/react-native/Libraries/DevToolsSettings/DevToolsSettingsManager.web.js b/node_modules/react-native/Libraries/DevToolsSettings/DevToolsSettingsManager.web.js
+new file mode 100644
+index 0000000..1aed332
+--- /dev/null
++++ b/node_modules/react-native/Libraries/DevToolsSettings/DevToolsSettingsManager.web.js
+@@ -0,0 +1,26 @@
++/**
++ * Web stub for DevToolsSettingsManager
++ * DevTools settings are handled by browser DevTools on web
++ */
++
++const DevToolsSettingsManager = {
++  setConsolePatchSettings(newSettings: Object): void {
++    // No-op on web - console is handled by browser
++  },
++  
++  getConsolePatchSettings(): ?Object {
++    // Return empty object on web
++    return {};
++  },
++  
++  setProfilingSettings(newSettings: Object): void {
++    // No-op on web
++  },
++  
++  getProfilingSettings(): ?Object {
++    // Return empty object on web
++    return {};
++  },
++};
++
++module.exports = DevToolsSettingsManager;
+diff --git a/node_modules/react-native/Libraries/EventEmitter/NativeEventEmitter.js b/node_modules/react-native/Libraries/EventEmitter/NativeEventEmitter.js
+index f30a69d..508b520 100644
+--- a/node_modules/react-native/Libraries/EventEmitter/NativeEventEmitter.js
++++ b/node_modules/react-native/Libraries/EventEmitter/NativeEventEmitter.js
+@@ -15,7 +15,7 @@ import type {
+   IEventEmitter,
+ } from '../vendor/emitter/EventEmitter';
+ 
+-import Platform from '../Utilities/Platform';
++import Platform from 'react-native-web/dist/exports/Platform';
+ import RCTDeviceEventEmitter from './RCTDeviceEventEmitter';
+ import invariant from 'invariant';
+ 
+diff --git a/node_modules/react-native/Libraries/Image/AssetSourceResolver.js b/node_modules/react-native/Libraries/Image/AssetSourceResolver.js
+index d7ae700..74cf0c9 100644
+--- a/node_modules/react-native/Libraries/Image/AssetSourceResolver.js
++++ b/node_modules/react-native/Libraries/Image/AssetSourceResolver.js
+@@ -21,7 +21,7 @@ export type ResolvedAssetSource = {|
+ import type {PackagerAsset} from '@react-native/assets-registry/registry';
+ 
+ const PixelRatio = require('../Utilities/PixelRatio').default;
+-const Platform = require('../Utilities/Platform');
++const Platform = require('react-native-web/dist/exports/Platform');
+ const {pickScale} = require('./AssetUtils');
+ const {
+   getAndroidResourceFolderName,
+diff --git a/node_modules/react-native/Libraries/Image/Image.js b/node_modules/react-native/Libraries/Image/Image.js
+new file mode 100644
+index 0000000..a3426ae
+--- /dev/null
++++ b/node_modules/react-native/Libraries/Image/Image.js
+@@ -0,0 +1,20 @@
++/**
++ * Image - Platform-specific implementation
++ */
++
++'use strict';
++
++const Platform = require('react-native-web/dist/exports/Platform');
++
++let Image;
++
++if (Platform.OS === 'web') {
++  Image = require('react-native-web/dist/exports/Image');
++} else if (Platform.OS === 'ios') {
++  Image = require('./Image.ios');
++} else {
++  Image = require('./Image.android');
++}
++
++module.exports = Image;
++module.exports.default = Image;
+diff --git a/node_modules/react-native/Libraries/Image/ImageViewNativeComponent.js b/node_modules/react-native/Libraries/Image/ImageViewNativeComponent.js
+index bd9ae7d..ab411f6 100644
+--- a/node_modules/react-native/Libraries/Image/ImageViewNativeComponent.js
++++ b/node_modules/react-native/Libraries/Image/ImageViewNativeComponent.js
+@@ -23,7 +23,7 @@ import type {ImageProps} from './ImageProps';
+ 
+ import * as NativeComponentRegistry from '../NativeComponent/NativeComponentRegistry';
+ import {ConditionallyIgnoredEventHandlers} from '../NativeComponent/ViewConfigIgnore';
+-import Platform from '../Utilities/Platform';
++import Platform from 'react-native-web/dist/exports/Platform';
+ 
+ type Props = $ReadOnly<{
+   ...ImageProps,
+diff --git a/node_modules/react-native/Libraries/Image/nativeImageSource.js b/node_modules/react-native/Libraries/Image/nativeImageSource.js
+index 7785b56..4bd1b8b 100644
+--- a/node_modules/react-native/Libraries/Image/nativeImageSource.js
++++ b/node_modules/react-native/Libraries/Image/nativeImageSource.js
+@@ -10,7 +10,7 @@
+ 
+ import type {ImageURISource} from './ImageSource';
+ 
+-import Platform from '../Utilities/Platform';
++import Platform from 'react-native-web/dist/exports/Platform';
+ 
+ type NativeImageSourceSpec = $ReadOnly<{|
+   android?: string,
+diff --git a/node_modules/react-native/Libraries/Inspector/Inspector.js b/node_modules/react-native/Libraries/Inspector/Inspector.js
+index bc76e79..8c5b155 100644
+--- a/node_modules/react-native/Libraries/Inspector/Inspector.js
++++ b/node_modules/react-native/Libraries/Inspector/Inspector.js
+@@ -19,7 +19,7 @@ const PressabilityDebug = require('../Pressability/PressabilityDebug');
+ const {findNodeHandle} = require('../ReactNative/RendererProxy');
+ const StyleSheet = require('../StyleSheet/StyleSheet');
+ const Dimensions = require('../Utilities/Dimensions').default;
+-const Platform = require('../Utilities/Platform');
++const Platform = require('react-native-web/dist/exports/Platform');
+ const getInspectorDataForViewAtPoint = require('./getInspectorDataForViewAtPoint');
+ const InspectorOverlay = require('./InspectorOverlay');
+ const InspectorPanel = require('./InspectorPanel');
+diff --git a/node_modules/react-native/Libraries/LayoutAnimation/LayoutAnimation.js b/node_modules/react-native/Libraries/LayoutAnimation/LayoutAnimation.js
+index 6283e67..f3bc33f 100644
+--- a/node_modules/react-native/Libraries/LayoutAnimation/LayoutAnimation.js
++++ b/node_modules/react-native/Libraries/LayoutAnimation/LayoutAnimation.js
+@@ -19,7 +19,7 @@ import type {
+ 
+ import {getFabricUIManager} from '../ReactNative/FabricUIManager';
+ import ReactNativeFeatureFlags from '../ReactNative/ReactNativeFeatureFlags';
+-import Platform from '../Utilities/Platform';
++import Platform from 'react-native-web/dist/exports/Platform';
+ 
+ const UIManager = require('../ReactNative/UIManager');
+ 
+diff --git a/node_modules/react-native/Libraries/Linking/Linking.js b/node_modules/react-native/Libraries/Linking/Linking.js
+index 76d1879..181d4a0 100644
+--- a/node_modules/react-native/Libraries/Linking/Linking.js
++++ b/node_modules/react-native/Libraries/Linking/Linking.js
+@@ -11,7 +11,7 @@
+ import type {EventSubscription} from '../vendor/emitter/EventEmitter';
+ 
+ import NativeEventEmitter from '../EventEmitter/NativeEventEmitter';
+-import Platform from '../Utilities/Platform';
++import Platform from 'react-native-web/dist/exports/Platform';
+ import NativeIntentAndroid from './NativeIntentAndroid';
+ import NativeLinkingManager from './NativeLinkingManager';
+ import invariant from 'invariant';
+diff --git a/node_modules/react-native/Libraries/Lists/FlatList.js b/node_modules/react-native/Libraries/Lists/FlatList.js
+index 1b2ee17..aca6b02 100644
+--- a/node_modules/react-native/Libraries/Lists/FlatList.js
++++ b/node_modules/react-native/Libraries/Lists/FlatList.js
+@@ -27,7 +27,7 @@ import memoizeOne from 'memoize-one';
+ const View = require('../Components/View/View');
+ const StyleSheet = require('../StyleSheet/StyleSheet');
+ const deepDiffer = require('../Utilities/differ/deepDiffer');
+-const Platform = require('../Utilities/Platform');
++const Platform = require('react-native-web/dist/exports/Platform');
+ const invariant = require('invariant');
+ const React = require('react');
+ 
+diff --git a/node_modules/react-native/Libraries/Lists/SectionList.js b/node_modules/react-native/Libraries/Lists/SectionList.js
+index 6177b07..9f94398 100644
+--- a/node_modules/react-native/Libraries/Lists/SectionList.js
++++ b/node_modules/react-native/Libraries/Lists/SectionList.js
+@@ -17,7 +17,7 @@ import type {
+   VirtualizedSectionListProps,
+ } from '@react-native/virtualized-lists';
+ 
+-import Platform from '../Utilities/Platform';
++import Platform from 'react-native-web/dist/exports/Platform';
+ import {VirtualizedSectionList} from '@react-native/virtualized-lists';
+ import * as React from 'react';
+ 
+diff --git a/node_modules/react-native/Libraries/Lists/SectionListModern.js b/node_modules/react-native/Libraries/Lists/SectionListModern.js
+index d9676f1..ae89d17 100644
+--- a/node_modules/react-native/Libraries/Lists/SectionListModern.js
++++ b/node_modules/react-native/Libraries/Lists/SectionListModern.js
+@@ -18,7 +18,7 @@ import type {
+ } from '@react-native/virtualized-lists';
+ import type {AbstractComponent, Element, ElementRef} from 'react';
+ 
+-import Platform from '../Utilities/Platform';
++import Platform from 'react-native-web/dist/exports/Platform';
+ import {VirtualizedSectionList} from '@react-native/virtualized-lists';
+ import React, {forwardRef, useImperativeHandle, useRef} from 'react';
+ 
+diff --git a/node_modules/react-native/Libraries/LogBox/LogBox.js b/node_modules/react-native/Libraries/LogBox/LogBox.js
+index 22c7596..5a79850 100644
+--- a/node_modules/react-native/Libraries/LogBox/LogBox.js
++++ b/node_modules/react-native/Libraries/LogBox/LogBox.js
+@@ -11,7 +11,7 @@
+ import type {IgnorePattern, LogData} from './Data/LogBoxData';
+ import type {ExtendedExceptionData} from './Data/parseLogBoxLog';
+ 
+-import Platform from '../Utilities/Platform';
++import Platform from 'react-native-web/dist/exports/Platform';
+ import RCTLog from '../Utilities/RCTLog';
+ 
+ export type {LogData, ExtendedExceptionData, IgnorePattern};
+diff --git a/node_modules/react-native/Libraries/LogBox/UI/LogBoxInspectorCodeFrame.js b/node_modules/react-native/Libraries/LogBox/UI/LogBoxInspectorCodeFrame.js
+index eff4443..5bde32c 100644
+--- a/node_modules/react-native/Libraries/LogBox/UI/LogBoxInspectorCodeFrame.js
++++ b/node_modules/react-native/Libraries/LogBox/UI/LogBoxInspectorCodeFrame.js
+@@ -15,7 +15,7 @@ import View from '../../Components/View/View';
+ import openFileInEditor from '../../Core/Devtools/openFileInEditor';
+ import StyleSheet from '../../StyleSheet/StyleSheet';
+ import Text from '../../Text/Text';
+-import Platform from '../../Utilities/Platform';
++import Platform from 'react-native-web/dist/exports/Platform';
+ import * as LogBoxData from '../Data/LogBoxData';
+ import AnsiHighlight from './AnsiHighlight';
+ import LogBoxButton from './LogBoxButton';
+diff --git a/node_modules/react-native/Libraries/LogBox/UI/LogBoxInspectorHeader.js b/node_modules/react-native/Libraries/LogBox/UI/LogBoxInspectorHeader.js
+index 1f578db..1e35199 100644
+--- a/node_modules/react-native/Libraries/LogBox/UI/LogBoxInspectorHeader.js
++++ b/node_modules/react-native/Libraries/LogBox/UI/LogBoxInspectorHeader.js
+@@ -16,7 +16,7 @@ import View from '../../Components/View/View';
+ import Image from '../../Image/Image';
+ import StyleSheet from '../../StyleSheet/StyleSheet';
+ import Text from '../../Text/Text';
+-import Platform from '../../Utilities/Platform';
++import Platform from 'react-native-web/dist/exports/Platform';
+ import LogBoxButton from './LogBoxButton';
+ import * as LogBoxStyle from './LogBoxStyle';
+ import * as React from 'react';
+diff --git a/node_modules/react-native/Libraries/LogBox/UI/LogBoxInspectorReactFrames.js b/node_modules/react-native/Libraries/LogBox/UI/LogBoxInspectorReactFrames.js
+index 4c1cf9b..6efc509 100644
+--- a/node_modules/react-native/Libraries/LogBox/UI/LogBoxInspectorReactFrames.js
++++ b/node_modules/react-native/Libraries/LogBox/UI/LogBoxInspectorReactFrames.js
+@@ -14,7 +14,7 @@ import View from '../../Components/View/View';
+ import openFileInEditor from '../../Core/Devtools/openFileInEditor';
+ import StyleSheet from '../../StyleSheet/StyleSheet';
+ import Text from '../../Text/Text';
+-import Platform from '../../Utilities/Platform';
++import Platform from 'react-native-web/dist/exports/Platform';
+ import LogBoxButton from './LogBoxButton';
+ import LogBoxInspectorSection from './LogBoxInspectorSection';
+ import * as LogBoxStyle from './LogBoxStyle';
+diff --git a/node_modules/react-native/Libraries/LogBox/UI/LogBoxInspectorStackFrame.js b/node_modules/react-native/Libraries/LogBox/UI/LogBoxInspectorStackFrame.js
+index 98326f9..6ce944e 100644
+--- a/node_modules/react-native/Libraries/LogBox/UI/LogBoxInspectorStackFrame.js
++++ b/node_modules/react-native/Libraries/LogBox/UI/LogBoxInspectorStackFrame.js
+@@ -14,7 +14,7 @@ import type {PressEvent} from '../../Types/CoreEventTypes';
+ import View from '../../Components/View/View';
+ import StyleSheet from '../../StyleSheet/StyleSheet';
+ import Text from '../../Text/Text';
+-import Platform from '../../Utilities/Platform';
++import Platform from 'react-native-web/dist/exports/Platform';
+ import LogBoxButton from './LogBoxButton';
+ import * as LogBoxStyle from './LogBoxStyle';
+ import * as React from 'react';
+diff --git a/node_modules/react-native/Libraries/Modal/Modal.js b/node_modules/react-native/Libraries/Modal/Modal.js
+index 9750d2e..78f0ab1 100644
+--- a/node_modules/react-native/Libraries/Modal/Modal.js
++++ b/node_modules/react-native/Libraries/Modal/Modal.js
+@@ -25,7 +25,7 @@ const AppContainer = require('../ReactNative/AppContainer');
+ const I18nManager = require('../ReactNative/I18nManager');
+ const {RootTagContext} = require('../ReactNative/RootTag');
+ const StyleSheet = require('../StyleSheet/StyleSheet');
+-const Platform = require('../Utilities/Platform');
++const Platform = require('react-native-web/dist/exports/Platform');
+ const React = require('react');
+ 
+ type ModalEventDefinitions = {
+diff --git a/node_modules/react-native/Libraries/NativeComponent/BaseViewConfig.web.js b/node_modules/react-native/Libraries/NativeComponent/BaseViewConfig.web.js
+new file mode 100644
+index 0000000..a9e50fa
+--- /dev/null
++++ b/node_modules/react-native/Libraries/NativeComponent/BaseViewConfig.web.js
+@@ -0,0 +1,14 @@
++/**
++ * Web stub for BaseViewConfig
++ * Provides minimal view config for web platform
++ */
++
++import type {PartialViewConfigWithoutName} from './PlatformBaseViewConfig';
++
++const BaseViewConfigWeb: PartialViewConfigWithoutName = {
++  validAttributes: {},
++  bubblingEventTypes: {},
++  directEventTypes: {},
++};
++
++export default BaseViewConfigWeb;
+diff --git a/node_modules/react-native/Libraries/NativeComponent/ViewConfigIgnore.js b/node_modules/react-native/Libraries/NativeComponent/ViewConfigIgnore.js
+index 99a067e..4db59e5 100644
+--- a/node_modules/react-native/Libraries/NativeComponent/ViewConfigIgnore.js
++++ b/node_modules/react-native/Libraries/NativeComponent/ViewConfigIgnore.js
+@@ -8,7 +8,7 @@
+  * @format
+  */
+ 
+-import Platform from '../Utilities/Platform';
++import Platform from 'react-native-web/dist/exports/Platform';
+ 
+ const ignoredViewConfigProps = new WeakSet<{...}>();
+ 
+diff --git a/node_modules/react-native/Libraries/NativeModules/specs/NativeSourceCode.js b/node_modules/react-native/Libraries/NativeModules/specs/NativeSourceCode.js
+index 8441e21..1f05359 100644
+--- a/node_modules/react-native/Libraries/NativeModules/specs/NativeSourceCode.js
++++ b/node_modules/react-native/Libraries/NativeModules/specs/NativeSourceCode.js
+@@ -9,6 +9,7 @@
+  */
+ 
+ import type {TurboModule} from '../../TurboModule/RCTExport';
++const Platform = require('react-native-web/dist/exports/Platform');
+ 
+ import * as TurboModuleRegistry from '../../TurboModule/TurboModuleRegistry';
+ 
+@@ -20,17 +21,30 @@ export interface Spec extends TurboModule {
+   +getConstants: () => SourceCodeConstants;
+ }
+ 
+-const NativeModule = TurboModuleRegistry.getEnforcing<Spec>('SourceCode');
+ let constants = null;
+ 
+-const NativeSourceCode = {
+-  getConstants(): SourceCodeConstants {
+-    if (constants == null) {
+-      constants = NativeModule.getConstants();
+-    }
+-
+-    return constants;
+-  },
+-};
+-
+-export default NativeSourceCode;
++// On web, use web stub
++if (Platform.OS === 'web') {
++  const NativeSourceCode = {
++    getConstants(): SourceCodeConstants {
++      if (constants == null) {
++        constants = {
++          scriptURL: typeof window !== 'undefined' ? window.location.href : '',
++        };
++      }
++      return constants;
++    },
++  };
++  module.exports = NativeSourceCode;
++} else {
++  const NativeModule = TurboModuleRegistry.getEnforcing<Spec>('SourceCode');
++  const NativeSourceCode = {
++    getConstants(): SourceCodeConstants {
++      if (constants == null) {
++        constants = NativeModule.getConstants();
++      }
++      return constants;
++    },
++  };
++  module.exports = NativeSourceCode;
++}
+diff --git a/node_modules/react-native/Libraries/NativeModules/specs/NativeSourceCode.web.js b/node_modules/react-native/Libraries/NativeModules/specs/NativeSourceCode.web.js
+new file mode 100644
+index 0000000..25a24e3
+--- /dev/null
++++ b/node_modules/react-native/Libraries/NativeModules/specs/NativeSourceCode.web.js
+@@ -0,0 +1,20 @@
++/**
++ * Web stub for NativeSourceCode
++ */
++
++'use strict';
++
++export type SourceCodeConstants = {|
++  scriptURL: string,
++|};
++
++const NativeSourceCode = {
++  getConstants(): SourceCodeConstants {
++    // On web, return the current page URL
++    return {
++      scriptURL: typeof window !== 'undefined' ? window.location.href : '',
++    };
++  },
++};
++
++export default NativeSourceCode;
+diff --git a/node_modules/react-native/Libraries/Network/RCTNetworking.android.js b/node_modules/react-native/Libraries/Network/RCTNetworking.android.js
+index f45d2e2..8a2563f 100644
+--- a/node_modules/react-native/Libraries/Network/RCTNetworking.android.js
++++ b/node_modules/react-native/Libraries/Network/RCTNetworking.android.js
+@@ -14,7 +14,7 @@ import type {NativeResponseType} from './XMLHttpRequest';
+ // Do not require the native RCTNetworking module directly! Use this wrapper module instead.
+ // It will add the necessary requestId, so that you don't have to generate it yourself.
+ import NativeEventEmitter from '../EventEmitter/NativeEventEmitter';
+-import Platform from '../Utilities/Platform';
++import Platform from 'react-native-web/dist/exports/Platform';
+ import convertRequestBody from './convertRequestBody';
+ import NativeNetworkingAndroid from './NativeNetworkingAndroid';
+ 
+diff --git a/node_modules/react-native/Libraries/Network/RCTNetworking.web.js b/node_modules/react-native/Libraries/Network/RCTNetworking.web.js
+new file mode 100644
+index 0000000..41a5280
+--- /dev/null
++++ b/node_modules/react-native/Libraries/Network/RCTNetworking.web.js
+@@ -0,0 +1,139 @@
++/**
++ * Web stub for RCTNetworking
++ * Uses browser's fetch API on web
++ */
++
++'use strict';
++
++const RCTDeviceEventEmitter = require('../EventEmitter/RCTDeviceEventEmitter');
++
++let requestIdCounter = 0;
++
++const RCTNetworking = {
++  addListener(eventType, listener, context) {
++    return RCTDeviceEventEmitter.addListener(eventType, listener, context);
++  },
++
++  sendRequest(
++    method,
++    trackingName,
++    url,
++    headers,
++    data,
++    responseType,
++    incrementalUpdates,
++    timeout,
++    callback,
++    withCredentials,
++  ) {
++    const requestId = ++requestIdCounter;
++    callback(requestId);
++
++    // Use fetch API for web
++    const fetchOptions = {
++      method,
++      headers: {
++        ...headers,
++      },
++      credentials: withCredentials ? 'include' : 'same-origin',
++    };
++
++    if (data && method !== 'GET' && method !== 'HEAD') {
++      fetchOptions.body = data;
++    }
++
++    // Set timeout if specified
++    let timeoutId = null;
++    if (timeout > 0) {
++      timeoutId = setTimeout(() => {
++        RCTDeviceEventEmitter.emit('didCompleteNetworkResponse', [
++          requestId,
++          'Request timeout',
++          true, // timeOutError
++        ]);
++      }, timeout);
++    }
++
++    fetch(url, fetchOptions)
++      .then(response => {
++        if (timeoutId) {
++          clearTimeout(timeoutId);
++        }
++
++        // Emit response event
++        const responseHeaders = {};
++        response.headers.forEach((value, key) => {
++          responseHeaders[key] = value;
++        });
++
++        RCTDeviceEventEmitter.emit('didReceiveNetworkResponse', [
++          requestId,
++          response.status,
++          responseHeaders,
++          response.url,
++        ]);
++
++        // Handle response based on type
++        if (responseType === 'text') {
++          return response.text();
++        } else if (responseType === 'blob') {
++          return response.blob();
++        } else {
++          return response.text();
++        }
++      })
++      .then(data => {
++        if (typeof data === 'string') {
++          if (incrementalUpdates) {
++            // For incremental updates, emit data in chunks
++            const chunkSize = 8192;
++            for (let i = 0; i < data.length; i += chunkSize) {
++              const chunk = data.slice(i, i + chunkSize);
++              RCTDeviceEventEmitter.emit('didReceiveNetworkIncrementalData', [
++                requestId,
++                chunk,
++                i,
++                data.length,
++              ]);
++            }
++          } else {
++            RCTDeviceEventEmitter.emit('didReceiveNetworkData', [requestId, data]);
++          }
++        } else {
++          // For blob, convert to text
++          data.text().then(text => {
++            RCTDeviceEventEmitter.emit('didReceiveNetworkData', [requestId, text]);
++          });
++        }
++
++        // Emit completion
++        RCTDeviceEventEmitter.emit('didCompleteNetworkResponse', [
++          requestId,
++          null,
++          false, // timeOutError
++        ]);
++      })
++      .catch(error => {
++        if (timeoutId) {
++          clearTimeout(timeoutId);
++        }
++        RCTDeviceEventEmitter.emit('didCompleteNetworkResponse', [
++          requestId,
++          error.message || 'Network request failed',
++          false, // timeOutError
++        ]);
++      });
++  },
++
++  abortRequest(requestId) {
++    // On web, we can't easily abort fetch requests after they've started
++    // This is a no-op for now
++  },
++
++  clearCookies(callback) {
++    // On web, cookies are managed by the browser
++    callback(false);
++  },
++};
++
++module.exports = RCTNetworking;
+diff --git a/node_modules/react-native/Libraries/NewAppScreen/components/DebugInstructions.js b/node_modules/react-native/Libraries/NewAppScreen/components/DebugInstructions.js
+index 9963fe6..ce8b283 100644
+--- a/node_modules/react-native/Libraries/NewAppScreen/components/DebugInstructions.js
++++ b/node_modules/react-native/Libraries/NewAppScreen/components/DebugInstructions.js
+@@ -12,7 +12,7 @@ import type {Node} from 'react';
+ 
+ import StyleSheet from '../../StyleSheet/StyleSheet';
+ import Text from '../../Text/Text';
+-import Platform from '../../Utilities/Platform';
++import Platform from 'react-native-web/dist/exports/Platform';
+ import React from 'react';
+ 
+ const styles = StyleSheet.create({
+diff --git a/node_modules/react-native/Libraries/NewAppScreen/components/ReloadInstructions.js b/node_modules/react-native/Libraries/NewAppScreen/components/ReloadInstructions.js
+index 6c1eba2..4c90013 100644
+--- a/node_modules/react-native/Libraries/NewAppScreen/components/ReloadInstructions.js
++++ b/node_modules/react-native/Libraries/NewAppScreen/components/ReloadInstructions.js
+@@ -12,7 +12,7 @@ import type {Node} from 'react';
+ 
+ import StyleSheet from '../../StyleSheet/StyleSheet';
+ import Text from '../../Text/Text';
+-import Platform from '../../Utilities/Platform';
++import Platform from 'react-native-web/dist/exports/Platform';
+ import React from 'react';
+ 
+ const styles = StyleSheet.create({
+diff --git a/node_modules/react-native/Libraries/PermissionsAndroid/PermissionsAndroid.js b/node_modules/react-native/Libraries/PermissionsAndroid/PermissionsAndroid.js
+index 12cb1b8..1af7c39 100644
+--- a/node_modules/react-native/Libraries/PermissionsAndroid/PermissionsAndroid.js
++++ b/node_modules/react-native/Libraries/PermissionsAndroid/PermissionsAndroid.js
+@@ -17,7 +17,7 @@ import NativeDialogManagerAndroid from '../NativeModules/specs/NativeDialogManag
+ import NativePermissionsAndroid from './NativePermissionsAndroid';
+ import invariant from 'invariant';
+ 
+-const Platform = require('../Utilities/Platform');
++const Platform = require('react-native-web/dist/exports/Platform');
+ 
+ export type Rationale = {
+   title: string,
+diff --git a/node_modules/react-native/Libraries/Pressability/HoverState.js b/node_modules/react-native/Libraries/Pressability/HoverState.js
+index ebbe992..7ea2b14 100644
+--- a/node_modules/react-native/Libraries/Pressability/HoverState.js
++++ b/node_modules/react-native/Libraries/Pressability/HoverState.js
+@@ -8,7 +8,7 @@
+  * @format
+  */
+ 
+-import Platform from '../Utilities/Platform';
++import Platform from 'react-native-web/dist/exports/Platform';
+ 
+ let isEnabled = false;
+ 
+diff --git a/node_modules/react-native/Libraries/Pressability/Pressability.js b/node_modules/react-native/Libraries/Pressability/Pressability.js
+index 24f664c..ee2a15d 100644
+--- a/node_modules/react-native/Libraries/Pressability/Pressability.js
++++ b/node_modules/react-native/Libraries/Pressability/Pressability.js
+@@ -21,7 +21,7 @@ import ReactNativeFeatureFlags from '../ReactNative/ReactNativeFeatureFlags';
+ import UIManager from '../ReactNative/UIManager';
+ import {type RectOrSize, normalizeRect} from '../StyleSheet/Rect';
+ import {type PointerEvent} from '../Types/CoreEventTypes';
+-import Platform from '../Utilities/Platform';
++import Platform from 'react-native-web/dist/exports/Platform';
+ import {isHoverEnabled} from './HoverState';
+ import PressabilityPerformanceEventEmitter from './PressabilityPerformanceEventEmitter.js';
+ import {type PressabilityTouchSignal as TouchSignal} from './PressabilityTypes.js';
+diff --git a/node_modules/react-native/Libraries/PushNotificationIOS/PushNotificationIOS.js b/node_modules/react-native/Libraries/PushNotificationIOS/PushNotificationIOS.js
+index 5422d02..f58feef 100644
+--- a/node_modules/react-native/Libraries/PushNotificationIOS/PushNotificationIOS.js
++++ b/node_modules/react-native/Libraries/PushNotificationIOS/PushNotificationIOS.js
+@@ -11,7 +11,7 @@
+ import type {EventSubscription} from '../vendor/emitter/EventEmitter';
+ 
+ import NativeEventEmitter from '../EventEmitter/NativeEventEmitter';
+-import Platform from '../Utilities/Platform';
++import Platform from 'react-native-web/dist/exports/Platform';
+ import NativePushNotificationManagerIOS from './NativePushNotificationManagerIOS';
+ import invariant from 'invariant';
+ 
+diff --git a/node_modules/react-native/Libraries/ReactNative/PaperUIManager.js b/node_modules/react-native/Libraries/ReactNative/PaperUIManager.js
+index 2b1efff..344480d 100644
+--- a/node_modules/react-native/Libraries/ReactNative/PaperUIManager.js
++++ b/node_modules/react-native/Libraries/ReactNative/PaperUIManager.js
+@@ -14,7 +14,7 @@ import NativeUIManager from './NativeUIManager';
+ 
+ const NativeModules = require('../BatchedBridge/NativeModules');
+ const defineLazyObjectProperty = require('../Utilities/defineLazyObjectProperty');
+-const Platform = require('../Utilities/Platform');
++const Platform = require('react-native-web/dist/exports/Platform');
+ const UIManagerProperties = require('./UIManagerProperties');
+ 
+ const viewManagerConfigs: {[string]: any | null} = {};
+diff --git a/node_modules/react-native/Libraries/ReactPrivate/ReactNativePrivateInterface.js b/node_modules/react-native/Libraries/ReactPrivate/ReactNativePrivateInterface.js
+index 75484e8..d6a516b 100644
+--- a/node_modules/react-native/Libraries/ReactPrivate/ReactNativePrivateInterface.js
++++ b/node_modules/react-native/Libraries/ReactPrivate/ReactNativePrivateInterface.js
+@@ -32,7 +32,7 @@ import typeof flattenStyle from '../StyleSheet/flattenStyle';
+ import type {DangerouslyImpreciseStyleProp} from '../StyleSheet/StyleSheet';
+ import typeof deepFreezeAndThrowOnMutationInDev from '../Utilities/deepFreezeAndThrowOnMutationInDev';
+ import typeof deepDiffer from '../Utilities/differ/deepDiffer';
+-import typeof Platform from '../Utilities/Platform';
++import Platform from 'react-native-web/dist/exports/Platform';
+ 
+ // flowlint unsafe-getters-setters:off
+ module.exports = {
+@@ -43,7 +43,7 @@ module.exports = {
+     return require('../Core/ExceptionsManager');
+   },
+   get Platform(): Platform {
+-    return require('../Utilities/Platform');
++    return require('react-native-web/dist/exports/Platform');
+   },
+   get RCTEventEmitter(): RCTEventEmitter {
+     return require('../EventEmitter/RCTEventEmitter');
+diff --git a/node_modules/react-native/Libraries/Share/Share.js b/node_modules/react-native/Libraries/Share/Share.js
+index 59ffde5..305dc19 100644
+--- a/node_modules/react-native/Libraries/Share/Share.js
++++ b/node_modules/react-native/Libraries/Share/Share.js
+@@ -12,7 +12,7 @@ import NativeActionSheetManager from '../ActionSheetIOS/NativeActionSheetManager
+ import NativeShareModule from './NativeShareModule';
+ 
+ const processColor = require('../StyleSheet/processColor').default;
+-const Platform = require('../Utilities/Platform');
++const Platform = require('react-native-web/dist/exports/Platform');
+ const invariant = require('invariant');
+ 
+ type Content =
+diff --git a/node_modules/react-native/Libraries/StyleSheet/PlatformColorValueTypes.web.js b/node_modules/react-native/Libraries/StyleSheet/PlatformColorValueTypes.web.js
+new file mode 100644
+index 0000000..1d93c0c
+--- /dev/null
++++ b/node_modules/react-native/Libraries/StyleSheet/PlatformColorValueTypes.web.js
+@@ -0,0 +1,17 @@
++﻿'use strict';
++
++// Web stub for PlatformColorValueTypes
++const processColorObject = (color) => {
++  // On web, platform colors are not supported, return null
++  return null;
++};
++
++const normalizeColorObject = (color) => {
++  // On web, platform colors are not supported, return null
++  return null;
++};
++
++module.exports = {
++  processColorObject,
++  normalizeColorObject,
++};
+diff --git a/node_modules/react-native/Libraries/StyleSheet/normalizeColor.js b/node_modules/react-native/Libraries/StyleSheet/normalizeColor.js
+index c9cabcf..28c6231 100644
+--- a/node_modules/react-native/Libraries/StyleSheet/normalizeColor.js
++++ b/node_modules/react-native/Libraries/StyleSheet/normalizeColor.js
+@@ -19,7 +19,7 @@ function normalizeColor(
+   color: ?(ColorValue | ProcessedColorValue),
+ ): ?ProcessedColorValue {
+   if (typeof color === 'object' && color != null) {
+-    const {normalizeColorObject} = require('./PlatformColorValueTypes');
++    const {normalizeColorObject} = require('./PlatformColorValueTypes.web');
+     const normalizedColor = normalizeColorObject(color);
+     if (normalizedColor != null) {
+       return normalizedColor;
+diff --git a/node_modules/react-native/Libraries/StyleSheet/processColor.js b/node_modules/react-native/Libraries/StyleSheet/processColor.js
+index 2bac21b..72ce36a 100644
+--- a/node_modules/react-native/Libraries/StyleSheet/processColor.js
++++ b/node_modules/react-native/Libraries/StyleSheet/processColor.js
+@@ -12,7 +12,7 @@
+ 
+ import type {ColorValue, NativeColorValue} from './StyleSheet';
+ 
+-const Platform = require('../Utilities/Platform');
++const Platform = require('react-native-web/dist/exports/Platform');
+ const normalizeColor = require('./normalizeColor');
+ 
+ export type ProcessedColorValue = number | NativeColorValue;
+@@ -30,7 +30,7 @@ function processColor(color?: ?(number | ColorValue)): ?ProcessedColorValue {
+ 
+   if (typeof normalizedColor === 'object') {
+     const processColorObject =
+-      require('./PlatformColorValueTypes').processColorObject;
++      require('./PlatformColorValueTypes.web').processColorObject;
+ 
+     const processedColorObj = processColorObject(normalizedColor);
+ 
+diff --git a/node_modules/react-native/Libraries/Text/Text.js b/node_modules/react-native/Libraries/Text/Text.js
+index d737ccc..a0185dd 100644
+--- a/node_modules/react-native/Libraries/Text/Text.js
++++ b/node_modules/react-native/Libraries/Text/Text.js
+@@ -15,7 +15,7 @@ import * as PressabilityDebug from '../Pressability/PressabilityDebug';
+ import usePressability from '../Pressability/usePressability';
+ import flattenStyle from '../StyleSheet/flattenStyle';
+ import processColor from '../StyleSheet/processColor';
+-import Platform from '../Utilities/Platform';
++import Platform from 'react-native-web/dist/exports/Platform';
+ import TextAncestor from './TextAncestor';
+ import {NativeText, NativeVirtualText} from './TextNativeComponent';
+ import * as React from 'react';
+diff --git a/node_modules/react-native/Libraries/TurboModule/TurboModuleRegistry.js b/node_modules/react-native/Libraries/TurboModule/TurboModuleRegistry.js
+index c8d6ad6..fc35308 100644
+--- a/node_modules/react-native/Libraries/TurboModule/TurboModuleRegistry.js
++++ b/node_modules/react-native/Libraries/TurboModule/TurboModuleRegistry.js
+@@ -71,6 +71,24 @@ export function get<T: TurboModule>(name: string): ?T {
+ 
+ export function getEnforcing<T: TurboModule>(name: string): T {
+   const module = requireModule<T>(name);
++  
++  // On web, return a stub instead of throwing
++  if (module == null && typeof window !== 'undefined') {
++    // Create a stub module for web with common methods
++    const stub: any = {
++      getConstants: () => {
++        // Return appropriate constants based on module name
++        if (name === 'SourceCode') {
++          return {
++            scriptURL: typeof window !== 'undefined' ? window.location.href : '',
++          };
++        }
++        return {};
++      },
++    };
++    return ((stub: $FlowFixMe): T);
++  }
++  
+   let message =
+     `TurboModuleRegistry.getEnforcing(...): '${name}' could not be found. ` +
+     'Verify that a module by this name is registered in the native binary.';
+diff --git a/node_modules/react-native/Libraries/Utilities/Appearance.js b/node_modules/react-native/Libraries/Utilities/Appearance.js
+index f085887..ac78bf7 100644
+--- a/node_modules/react-native/Libraries/Utilities/Appearance.js
++++ b/node_modules/react-native/Libraries/Utilities/Appearance.js
+@@ -9,7 +9,7 @@
+  */
+ 
+ import NativeEventEmitter from '../EventEmitter/NativeEventEmitter';
+-import Platform from '../Utilities/Platform';
++import Platform from 'react-native-web/dist/exports/Platform';
+ import EventEmitter, {
+   type EventSubscription,
+ } from '../vendor/emitter/EventEmitter';
+diff --git a/node_modules/react-native/Libraries/Utilities/BackHandler.js b/node_modules/react-native/Libraries/Utilities/BackHandler.js
+new file mode 100644
+index 0000000..02a03c8
+--- /dev/null
++++ b/node_modules/react-native/Libraries/Utilities/BackHandler.js
+@@ -0,0 +1,15 @@
++/**
++ * BackHandler - Platform-specific implementation
++ */
++
++'use strict';
++
++const Platform = require('react-native-web/dist/exports/Platform');
++
++if (Platform.OS === 'web') {
++  module.exports = require('./BackHandler.web');
++} else if (Platform.OS === 'ios') {
++  module.exports = require('./BackHandler.ios');
++} else {
++  module.exports = require('./BackHandler.android');
++}
+diff --git a/node_modules/react-native/Libraries/Utilities/BackHandler.web.js b/node_modules/react-native/Libraries/Utilities/BackHandler.web.js
+new file mode 100644
+index 0000000..3556369
+--- /dev/null
++++ b/node_modules/react-native/Libraries/Utilities/BackHandler.web.js
+@@ -0,0 +1,47 @@
++/**
++ * Web stub for BackHandler
++ * On web, back button is handled by browser history
++ */
++
++'use strict';
++
++const DeviceEventEmitter = require('../EventEmitter/RCTDeviceEventEmitter');
++
++function emptyFunction() {}
++
++const BackHandler = {
++  exitApp: emptyFunction,
++  
++  addEventListener(eventName, handler) {
++    if (eventName === 'hardwareBackPress' && typeof window !== 'undefined') {
++      // On web, listen to browser back button
++      const handlePopState = () => {
++        const result = handler();
++        // If handler returns true, prevent default back navigation
++        if (result === true) {
++          window.history.pushState(null, '', window.location.href);
++        }
++      };
++      
++      window.addEventListener('popstate', handlePopState);
++      
++      return {
++        remove: () => {
++          window.removeEventListener('popstate', handlePopState);
++        },
++      };
++    }
++    
++    // For other events, use DeviceEventEmitter
++    const subscription = DeviceEventEmitter.addListener(eventName, handler);
++    return {
++      remove: () => subscription.remove(),
++    };
++  },
++  
++  removeEventListener(_eventName, _handler) {
++    // Handled by subscription.remove() above
++  },
++};
++
++module.exports = BackHandler;
+diff --git a/node_modules/react-native/Libraries/Utilities/DevSettings.js b/node_modules/react-native/Libraries/Utilities/DevSettings.js
+index af227f2..0e9480c 100644
+--- a/node_modules/react-native/Libraries/Utilities/DevSettings.js
++++ b/node_modules/react-native/Libraries/Utilities/DevSettings.js
+@@ -12,7 +12,7 @@ import type {EventSubscription} from '../vendor/emitter/EventEmitter';
+ 
+ import NativeEventEmitter from '../EventEmitter/NativeEventEmitter';
+ import NativeDevSettings from '../NativeModules/specs/NativeDevSettings';
+-import Platform from '../Utilities/Platform';
++import Platform from 'react-native-web/dist/exports/Platform';
+ 
+ let DevSettings: {
+   addMenuItem(title: string, handler: () => mixed): void,
+diff --git a/node_modules/react-native/Libraries/Utilities/Dimensions.js b/node_modules/react-native/Libraries/Utilities/Dimensions.js
+index 37ab1e0..f05e20a 100644
+--- a/node_modules/react-native/Libraries/Utilities/Dimensions.js
++++ b/node_modules/react-native/Libraries/Utilities/Dimensions.js
+@@ -110,6 +110,8 @@ class Dimensions {
+   }
+ }
+ 
++const Platform = require('react-native-web/dist/exports/Platform');
++
+ let initialDims: ?$ReadOnly<DimensionsPayload> =
+   global.nativeExtensions &&
+   global.nativeExtensions.DeviceInfo &&
+@@ -122,7 +124,28 @@ if (!initialDims) {
+       Dimensions.set(update);
+     },
+   );
+-  initialDims = NativeDeviceInfo.getConstants().Dimensions;
++  
++  // On web, get dimensions from window if NativeDeviceInfo fails
++  try {
++    initialDims = NativeDeviceInfo.getConstants().Dimensions;
++  } catch (e) {
++    if (Platform.OS === 'web' && typeof window !== 'undefined') {
++      const width = window.innerWidth || 375;
++      const height = window.innerHeight || 667;
++      const scale = window.devicePixelRatio || 1;
++      initialDims = {
++        window: { width, height, scale, fontScale: 1 },
++        screen: { 
++          width: window.screen?.width || width, 
++          height: window.screen?.height || height, 
++          scale, 
++          fontScale: 1 
++        },
++      };
++    } else {
++      throw e;
++    }
++  }
+ }
+ 
+ Dimensions.set(initialDims);
+diff --git a/node_modules/react-native/Libraries/Utilities/HMRClient.js b/node_modules/react-native/Libraries/Utilities/HMRClient.js
+index 03ae287..e53eee4 100644
+--- a/node_modules/react-native/Libraries/Utilities/HMRClient.js
++++ b/node_modules/react-native/Libraries/Utilities/HMRClient.js
+@@ -15,7 +15,7 @@ import LogBox from '../LogBox/LogBox';
+ import NativeRedBox from '../NativeModules/specs/NativeRedBox';
+ 
+ const DevSettings = require('./DevSettings');
+-const Platform = require('./Platform');
++const Platform = require('react-native-web/dist/exports/Platform');
+ const invariant = require('invariant');
+ const MetroHMRClient = require('metro-runtime/src/modules/HMRClient');
+ const prettyFormat = require('pretty-format');
+diff --git a/node_modules/react-native/Libraries/Utilities/NativeDeviceInfo.js b/node_modules/react-native/Libraries/Utilities/NativeDeviceInfo.js
+index ff4e281..bb31f8b 100644
+--- a/node_modules/react-native/Libraries/Utilities/NativeDeviceInfo.js
++++ b/node_modules/react-native/Libraries/Utilities/NativeDeviceInfo.js
+@@ -43,16 +43,31 @@ export interface Spec extends TurboModule {
+   +getConstants: () => DeviceInfoConstants;
+ }
+ 
+-const NativeModule: Spec = TurboModuleRegistry.getEnforcing<Spec>('DeviceInfo');
+-let constants: ?DeviceInfoConstants = null;
++const Platform = require('react-native-web/dist/exports/Platform');
+ 
+-const NativeDeviceInfo = {
+-  getConstants(): DeviceInfoConstants {
+-    if (constants == null) {
+-      constants = NativeModule.getConstants();
+-    }
+-    return constants;
+-  },
+-};
++let constants: ?DeviceInfoConstants = null;
+ 
+-export default NativeDeviceInfo;
++// On web, use web stub
++if (Platform.OS === 'web') {
++  const webDeviceInfo = require('./NativeDeviceInfo.web');
++  const NativeDeviceInfo = {
++    getConstants(): DeviceInfoConstants {
++      if (constants == null) {
++        constants = webDeviceInfo.getConstants();
++      }
++      return constants;
++    },
++  };
++  module.exports = NativeDeviceInfo;
++} else {
++  const NativeModule: Spec = TurboModuleRegistry.getEnforcing<Spec>('DeviceInfo');
++  const NativeDeviceInfo = {
++    getConstants(): DeviceInfoConstants {
++      if (constants == null) {
++        constants = NativeModule.getConstants();
++      }
++      return constants;
++    },
++  };
++  module.exports = NativeDeviceInfo;
++}
+diff --git a/node_modules/react-native/Libraries/Utilities/NativeDeviceInfo.web.js b/node_modules/react-native/Libraries/Utilities/NativeDeviceInfo.web.js
+new file mode 100644
+index 0000000..835a725
+--- /dev/null
++++ b/node_modules/react-native/Libraries/Utilities/NativeDeviceInfo.web.js
+@@ -0,0 +1,64 @@
++/**
++ * Web stub for NativeDeviceInfo
++ */
++
++'use strict';
++
++export type DisplayMetricsAndroid = {|
++  width: number,
++  height: number,
++  scale: number,
++  fontScale: number,
++  densityDpi: number,
++|};
++
++export type DisplayMetrics = {|
++  width: number,
++  height: number,
++  scale: number,
++  fontScale: number,
++|};
++
++export type DimensionsPayload = {|
++  window?: DisplayMetrics,
++  screen?: DisplayMetrics,
++  windowPhysicalPixels?: DisplayMetricsAndroid,
++  screenPhysicalPixels?: DisplayMetricsAndroid,
++|};
++
++export type DeviceInfoConstants = {|
++  +Dimensions: DimensionsPayload,
++  +isIPhoneX_deprecated?: boolean,
++|};
++
++const NativeDeviceInfo = {
++  getConstants(): DeviceInfoConstants {
++    // On web, get dimensions from window
++    const width = typeof window !== 'undefined' ? window.innerWidth : 375;
++    const height = typeof window !== 'undefined' ? window.innerHeight : 667;
++    const scale = typeof window !== 'undefined' && window.devicePixelRatio ? window.devicePixelRatio : 1;
++    
++    const windowMetrics = {
++      width,
++      height,
++      scale,
++      fontScale: 1,
++    };
++    
++    const screenMetrics = {
++      width: typeof window !== 'undefined' && window.screen ? window.screen.width : width,
++      height: typeof window !== 'undefined' && window.screen ? window.screen.height : height,
++      scale,
++      fontScale: 1,
++    };
++    
++    return {
++      Dimensions: {
++        window: windowMetrics,
++        screen: screenMetrics,
++      },
++    };
++  },
++};
++
++export default NativeDeviceInfo;
+diff --git a/node_modules/react-native/Libraries/Vibration/Vibration.js b/node_modules/react-native/Libraries/Vibration/Vibration.js
+index db124c6..5760f99 100644
+--- a/node_modules/react-native/Libraries/Vibration/Vibration.js
++++ b/node_modules/react-native/Libraries/Vibration/Vibration.js
+@@ -11,7 +11,7 @@
+ 
+ import NativeVibration from './NativeVibration';
+ 
+-const Platform = require('../Utilities/Platform');
++const Platform = require('react-native-web/dist/exports/Platform');
+ 
+ /**
+  * Vibration API
+diff --git a/node_modules/react-native/Libraries/WebSocket/NativeBrowserWebSocket.js b/node_modules/react-native/Libraries/WebSocket/NativeBrowserWebSocket.js
+new file mode 100644
+index 0000000..50a0288
+--- /dev/null
++++ b/node_modules/react-native/Libraries/WebSocket/NativeBrowserWebSocket.js
+@@ -0,0 +1,32 @@
++/**
++ * Captures the browser's native WebSocket before React Native overrides it
++ * This module should be required as early as possible
++ */
++
++'use strict';
++
++// Capture the native WebSocket immediately when this module is first loaded
++// This needs to happen before React Native's WebSocket class is defined
++let NativeBrowserWebSocket = null;
++
++if (typeof window !== 'undefined' && window.WebSocket) {
++  // Check if this is the real native WebSocket (has prototype.send as a native function)
++  const ws = window.WebSocket;
++  if (ws.prototype && typeof ws.prototype.send === 'function') {
++    // Check if it's React Native's WebSocket by looking for specific properties
++    if (!ws.prototype._registerEvents) {
++      NativeBrowserWebSocket = ws;
++    }
++  }
++}
++
++// Fallback checks
++if (!NativeBrowserWebSocket) {
++  if (typeof self !== 'undefined' && self.WebSocket) {
++    NativeBrowserWebSocket = self.WebSocket;
++  } else if (typeof globalThis !== 'undefined' && globalThis.WebSocket) {
++    NativeBrowserWebSocket = globalThis.WebSocket;
++  }
++}
++
++module.exports = NativeBrowserWebSocket;
+diff --git a/node_modules/react-native/Libraries/WebSocket/NativeWebSocketModule.web.js b/node_modules/react-native/Libraries/WebSocket/NativeWebSocketModule.web.js
+new file mode 100644
+index 0000000..8d54a63
+--- /dev/null
++++ b/node_modules/react-native/Libraries/WebSocket/NativeWebSocketModule.web.js
+@@ -0,0 +1,65 @@
++/**
++ * Web stub for NativeWebSocketModule
++ * Uses browser's native WebSocket API
++ */
++
++'use strict';
++
++const RCTDeviceEventEmitter = require('../EventEmitter/RCTDeviceEventEmitter');
++
++// Map socket IDs to WebSocket instances
++const socketMap = new Map();
++
++// Get the native browser WebSocket that was captured before React Native loaded
++function getNativeWebSocket() {
++  // Only trust the saved native WebSocket captured in web-entry.js
++  if (typeof window !== 'undefined' && window.__NATIVE_WEBSOCKET__) {
++    return window.__NATIVE_WEBSOCKET__;
++  }
++  // If not captured, return null to avoid recursion with RN's WebSocket
++  return null;
++}
++
++const NativeWebSocketModule = {
++  connect(url, protocols, options, socketID) {
++    // On web, disable React Native's WebSocket to avoid recursion with the RN polyfill.
++    // HMR/devtools may not work, but the app will render.
++    const schedule =
++      (typeof setTimeout !== 'undefined' && setTimeout) ||
++      (typeof queueMicrotask !== 'undefined' && queueMicrotask) ||
++      (fn => Promise.resolve().then(fn));
++    schedule(() => {
++      RCTDeviceEventEmitter.emit('websocketFailed', {
++        id: socketID,
++        message: 'WebSocket disabled in web stub',
++      });
++    });
++    return;
++  },
++
++  send(_message, _socketID) {
++    // no-op on web stub
++  },
++
++  sendBinary(_base64String, _socketID) {
++    // no-op on web stub
++  },
++
++  ping(_socketID) {
++    // no-op on web stub
++  },
++
++  close(_code, _reason, socketID) {
++    socketMap.delete(socketID);
++  },
++
++  addListener(eventName) {
++    // Handled by RCTDeviceEventEmitter
++  },
++
++  removeListeners(count) {
++    // Handled by RCTDeviceEventEmitter
++  },
++};
++
++module.exports = NativeWebSocketModule;
+diff --git a/node_modules/react-native/Libraries/WebSocket/WebSocket.js b/node_modules/react-native/Libraries/WebSocket/WebSocket.js
+index 3fdde2b..466550d 100644
+--- a/node_modules/react-native/Libraries/WebSocket/WebSocket.js
++++ b/node_modules/react-native/Libraries/WebSocket/WebSocket.js
+@@ -15,8 +15,10 @@ import Blob from '../Blob/Blob';
+ import BlobManager from '../Blob/BlobManager';
+ import NativeEventEmitter from '../EventEmitter/NativeEventEmitter';
+ import binaryToBase64 from '../Utilities/binaryToBase64';
+-import Platform from '../Utilities/Platform';
+-import NativeWebSocketModule from './NativeWebSocketModule';
++import Platform from 'react-native-web/dist/exports/Platform';
++const NativeWebSocketModule = Platform.OS === 'web' 
++  ? require('./NativeWebSocketModule.web')
++  : require('./NativeWebSocketModule');
+ import WebSocketEvent from './WebSocketEvent';
+ import base64 from 'base64-js';
+ import EventTarget from 'event-target-shim';
+diff --git a/node_modules/react-native/Libraries/WebSocket/WebSocketInterceptor.js b/node_modules/react-native/Libraries/WebSocket/WebSocketInterceptor.js
+index 43192fb..bbd80ff 100644
+--- a/node_modules/react-native/Libraries/WebSocket/WebSocketInterceptor.js
++++ b/node_modules/react-native/Libraries/WebSocket/WebSocketInterceptor.js
+@@ -8,7 +8,7 @@
+  */
+ 
+ import NativeEventEmitter from '../EventEmitter/NativeEventEmitter';
+-import Platform from '../Utilities/Platform';
++import Platform from 'react-native-web/dist/exports/Platform';
+ import NativeWebSocketModule from './NativeWebSocketModule';
+ import base64 from 'base64-js';
+ 
+diff --git a/node_modules/react-native/Libraries/vendor/core/ErrorUtils.js b/node_modules/react-native/Libraries/vendor/core/ErrorUtils.js
+index 37b0da1..0c07ddc 100644
+--- a/node_modules/react-native/Libraries/vendor/core/ErrorUtils.js
++++ b/node_modules/react-native/Libraries/vendor/core/ErrorUtils.js
+@@ -22,4 +22,28 @@ import type {ErrorUtilsT} from '@react-native/js-polyfills/error-guard';
+  * that use it aren't just using a global variable, so simply export the global
+  * variable here. ErrorUtils is originally defined in a file named error-guard.js.
+  */
++
++// For web, initialize ErrorUtils if it doesn't exist
++if (typeof window !== 'undefined' && !global.ErrorUtils) {
++  global.ErrorUtils = {
++    setGlobalHandler: (handler) => {
++      if (typeof window !== 'undefined') {
++        window.onerror = (message, source, lineno, colno, error) => {
++          handler(error || new Error(String(message)), false);
++        };
++        window.onunhandledrejection = (event) => {
++          handler(event.reason, false);
++        };
++      }
++    },
++    getGlobalHandler: () => null,
++    reportFatalError: (error) => {
++      console.error('Fatal error:', error);
++    },
++    reportError: (error) => {
++      console.error('Error:', error);
++    },
++  };
++}
++
+ module.exports = (global.ErrorUtils: ErrorUtilsT);

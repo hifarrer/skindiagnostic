@@ -1,0 +1,52 @@
+{
+  "expo": {
+    "name": "AiMakeup",
+    "slug": "aimakeup",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#FF69B4"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.aimakeup.app"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#FF69B4"
+      },
+      "package": "com.aimakeup.app"
+    },
+    "web": {
+      "bundler": "metro"
+    },
+    "plugins": [
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow AiMakeup to access your camera to try on makeup and analyze your skin."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow AiMakeup to access your photos to upload images for analysis."
+        }
+      ]
+    ],
+    "scheme": "aimakeup",
+    "extra": {
+      "eas": {
+        "projectId": ""
+      }
+    }
+  }
+}
