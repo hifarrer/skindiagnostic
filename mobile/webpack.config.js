@@ -1,16 +1,24 @@
 const createExpoWebpackConfigAsync = require('@expo/webpack-config');
 const webpack = require('webpack');
+const path = require('path');
 
 module.exports = async function (env, argv) {
+  // Ensure projectRoot is set for Expo Router
+  const projectRoot = path.resolve(__dirname);
+  
   const config = await createExpoWebpackConfigAsync(
     {
       ...env,
+      projectRoot: projectRoot,
       babel: {
-        dangerouslyAddModulePathsToTranspile: ['expo-modules-core'],
+        dangerouslyAddModulePathsToTranspile: ['expo-modules-core', 'expo-router'],
       },
     },
     argv
   );
+  
+  // Ensure context is set correctly
+  config.context = projectRoot;
 
   // Add polyfills for Node.js core modules
   config.resolve.fallback = {
