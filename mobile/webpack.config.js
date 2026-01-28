@@ -73,6 +73,24 @@ module.exports = async function (env, argv) {
     }
   }
   
+  // Use IgnorePlugin to prevent css-minimizer-webpack-plugin from loading esbuild/@parcel/css
+  // This is a safety net in case the plugin is still being instantiated
+  if (!config.plugins) {
+    config.plugins = [];
+  }
+  config.plugins.unshift(
+    new webpack.IgnorePlugin({
+      resourceRegExp: /^esbuild$/,
+      contextRegExp: /css-minimizer-webpack-plugin/,
+    })
+  );
+  config.plugins.unshift(
+    new webpack.IgnorePlugin({
+      resourceRegExp: /^@parcel\/css$/,
+      contextRegExp: /css-minimizer-webpack-plugin/,
+    })
+  );
+  
   // Exclude webpack.config.js and config files from babel processing
   // This prevents expo-router from trying to process webpack.config.js
   if (config.module && config.module.rules) {
