@@ -56,7 +56,17 @@ module.exports = async function (env, argv) {
     url: require.resolve('url'),
     zlib: require.resolve('browserify-zlib'),
     path: require.resolve('path-browserify'),
+    fs: false, // fs is not available in browser, scripts should not be bundled
   };
+  
+  // Exclude scripts directory from webpack processing using IgnorePlugin
+  // Scripts are build-time only, not part of the web bundle
+  config.plugins.push(
+    new webpack.IgnorePlugin({
+      resourceRegExp: /^\.\/scripts\//,
+      contextRegExp: projectRoot,
+    })
+  );
 
   // Ensure plugins array exists and add our plugins
   config.plugins = config.plugins || [];
