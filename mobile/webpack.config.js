@@ -59,6 +59,13 @@ module.exports = async function (env, argv) {
     fs: false, // fs is not available in browser, scripts should not be bundled
   };
   
+  // Add aliases for packages with native bindings that don't work in browser
+  config.resolve.alias = {
+    ...config.resolve.alias,
+    // lightningcss has native Node.js bindings that don't work in browser
+    'lightningcss': false,
+  };
+  
   // Exclude scripts directory from webpack processing using IgnorePlugin
   // Scripts are build-time only, not part of the web bundle
   // Convert projectRoot to RegExp by escaping special characters
