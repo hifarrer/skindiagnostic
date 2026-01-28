@@ -118,6 +118,20 @@ module.exports = async function (env, argv) {
   // The "Cannot destructure property 'name'" error can come from webpack's source map generation
   config.devtool = false;
   
+  // Remove ExpectedErrorsPlugin that's causing "Cannot destructure property 'name'" errors
+  // This plugin from @expo/webpack-config tries to parse source maps to show better errors
+  // but fails on malformed source maps in node_modules
+  if (config.plugins && Array.isArray(config.plugins)) {
+    config.plugins = config.plugins.filter(plugin => {
+      const pluginName = plugin && plugin.constructor ? plugin.constructor.name : '';
+      if (pluginName === 'ExpectedErrorsPlugin') {
+        console.log('Removing ExpectedErrorsPlugin to avoid source map parsing errors');
+        return false;
+      }
+      return true;
+    });
+  }
+  
   // Exclude webpack.config.js and config files from babel processing
   // This prevents expo-router from trying to process webpack.config.js
   if (config.module && config.module.rules) {
