@@ -81,9 +81,13 @@ Vercel is often easier for Expo apps and handles the directory structure better.
    - Select your repository
    - **Root Directory**: Leave as root (don't set to `mobile`)
    - **Framework Preset**: Other
+   - **Build Command**: Leave empty (uses vercel.json)
+   - **Output Directory**: Leave empty (uses vercel.json)
+   - Vercel will automatically detect `vercel.json` in the `mobile` folder
+   
+   **OR manually set:**
    - **Build Command**: `cd mobile && npm install && npx expo export --platform web`
    - **Output Directory**: `mobile/web-build`
-   - Vercel will automatically detect `vercel.json` if present
 
 3. **Add Environment Variables:**
    ```
