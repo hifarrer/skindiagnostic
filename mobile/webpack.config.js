@@ -228,6 +228,22 @@ module.exports = async function (env, argv) {
     })
   );
   
+  // Ignore TypeScript files from esbuild and @parcel packages
+  // These packages include TypeScript source files that webpack tries to process
+  config.plugins.push(
+    new webpack.IgnorePlugin({
+      resourceRegExp: /\.ts$/,
+      contextRegExp: /node_modules\/(esbuild|@parcel)/,
+    })
+  );
+  
+  config.plugins.push(
+    new webpack.IgnorePlugin({
+      resourceRegExp: /\.tsx$/,
+      contextRegExp: /node_modules\/(esbuild|@parcel)/,
+    })
+  );
+  
   // Ensure resolve.alias exists and doesn't have false values
   if (!config.resolve) {
     config.resolve = {};
