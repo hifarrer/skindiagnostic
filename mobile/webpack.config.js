@@ -32,6 +32,31 @@ module.exports = async function (env, argv) {
     argv
   );
   
+  // Exclude webpack.config.js and other config files from babel/expo-router processing
+  if (!config.module) {
+    config.module = {};
+  }
+  if (!config.module.rules) {
+    config.module.rules = [];
+  }
+  // Find babel-loader rule and add exclude for config files
+  config.module.rules.forEach(rule => {
+    if (rule.use && Array.isArray(rule.use)) {
+      const babelLoader = rule.use.find(loader => 
+        typeof loader === 'object' && loader.loader && loader.loader.includes('babel-loader')
+      );
+      if (babelLoader) {
+        if (!rule.exclude) {
+          rule.exclude = [];
+        } else if (!Array.isArray(rule.exclude)) {
+          rule.exclude = [rule.exclude];
+        }
+        rule.exclude.push(/webpack\.config\.js$/);
+        rule.exclude.push(/\.config\.js$/);
+      }
+    }
+  });
+  
   // Ensure context is set correctly
   config.context = projectRoot;
   
