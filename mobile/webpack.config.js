@@ -114,6 +114,10 @@ module.exports = async function (env, argv) {
     });
   }
   
+  // Disable source maps entirely to avoid parser errors
+  // The "Cannot destructure property 'name'" error can come from webpack's source map generation
+  config.devtool = false;
+  
   // Exclude webpack.config.js and config files from babel processing
   // This prevents expo-router from trying to process webpack.config.js
   if (config.module && config.module.rules) {
