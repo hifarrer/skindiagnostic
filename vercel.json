@@ -1,6 +1,8 @@
 {
-  "buildCommand": "cd mobile && npm install && npx expo export --platform web",
+  "buildCommand": "cd mobile && npm install && EXPO_ROUTER_APP_ROOT=$(pwd)/mobile npx expo export --platform web",
   "outputDirectory": "mobile/web-build",
   "installCommand": "cd mobile && npm install",
-  "framework": null
+  "framework": null,
+  "cleanUrls": true,
+  "trailingSlash": false
 }
