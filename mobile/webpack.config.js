@@ -53,27 +53,27 @@ module.exports = async function (env, argv) {
     argv
   );
   
-  // Exclude TypeScript files from node_modules from source-map-loader
+  // Exclude TypeScript files from node_modules from all loaders
   // This prevents errors when processing esbuild or @parcel/css TypeScript files
   if (config.module && config.module.rules) {
     config.module.rules.forEach(rule => {
-      if (rule.use && Array.isArray(rule.use)) {
-        const sourceMapLoader = rule.use.find(loader => 
-          typeof loader === 'string' && loader.includes('source-map-loader') ||
-          typeof loader === 'object' && loader.loader && loader.loader.includes('source-map-loader')
-        );
-        if (sourceMapLoader) {
-          // Exclude TypeScript files and esbuild/@parcel/css from source-map-loader
-          if (!rule.exclude) {
-            rule.exclude = [];
-          } else if (!Array.isArray(rule.exclude)) {
-            rule.exclude = [rule.exclude];
-          }
-          rule.exclude.push(/\.ts$/);
-          rule.exclude.push(/\.tsx$/);
-          rule.exclude.push(/node_modules\/esbuild/);
-          rule.exclude.push(/node_modules\/@parcel/);
-        }
+      // Add exclude for TypeScript files in node_modules to all rules
+      if (!rule.exclude) {
+        rule.exclude = [];
+      } else if (!Array.isArray(rule.exclude)) {
+        rule.exclude = [rule.exclude];
+      }
+      // Exclude TypeScript files from node_modules (especially esbuild and @parcel)
+      if (!rule.exclude.some(ex => ex.toString().includes('node_modules.*\\.ts'))) {
+        rule.exclude.push(/node_modules\/.*\.ts$/);
+        rule.exclude.push(/node_modules\/.*\.tsx$/);
+      }
+      // Specifically exclude esbuild and @parcel packages
+      if (!rule.exclude.some(ex => ex.toString().includes('esbuild'))) {
+        rule.exclude.push(/node_modules\/esbuild/);
+      }
+      if (!rule.exclude.some(ex => ex.toString().includes('@parcel'))) {
+        rule.exclude.push(/node_modules\/@parcel/);
       }
     });
   }
