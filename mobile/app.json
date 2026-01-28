@@ -26,7 +26,8 @@
       "package": "com.aimakeup.app"
     },
     "web": {
-      "bundler": "webpack"
+      "bundler": "metro",
+      "output": "static"
     },
     "plugins": [
       [

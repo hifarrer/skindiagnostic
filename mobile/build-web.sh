@@ -43,12 +43,11 @@ if [ -f "$MOBILE_DIR/scripts/patch-expo-router.js" ]; then
 fi
 
 # Run the actual build command
-# Use expo export:web for webpack bundler (configured in app.json)
-# Set environment variables and use NODE_OPTIONS to ensure they're available when webpack.config.js loads
+# Use expo export --platform web for Metro bundler (configured in app.json)
 export EXPO_ROUTER_APP_ROOT="$MOBILE_DIR"
 export EXPO_ROUTER_PROJECT_ROOT="$MOBILE_DIR"
-echo "Build script: Running expo export:web (Webpack)..."
+echo "Build script: Running expo export --platform web (Metro)..."
 echo "Build script: EXPO_ROUTER_APP_ROOT=$EXPO_ROUTER_APP_ROOT"
-NODE_OPTIONS="--require $MOBILE_DIR/scripts/set-expo-router-env.js" EXPO_ROUTER_APP_ROOT="$MOBILE_DIR" npx expo export:web
+EXPO_ROUTER_APP_ROOT="$MOBILE_DIR" npx expo export --platform web
 
 echo "Build script: Build complete!"
