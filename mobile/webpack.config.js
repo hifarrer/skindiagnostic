@@ -2,11 +2,16 @@
 // This must be at the very top to prevent expo-router from failing during module loading
 const path = require('path');
 const projectRoot = path.resolve(__dirname);
-if (!process.env.EXPO_ROUTER_APP_ROOT) {
-  process.env.EXPO_ROUTER_APP_ROOT = projectRoot;
-}
-if (!process.env.EXPO_ROUTER_PROJECT_ROOT) {
-  process.env.EXPO_ROUTER_PROJECT_ROOT = projectRoot;
+
+// ALWAYS set these - don't check, just set them immediately
+// This ensures they're available when expo-router code runs
+process.env.EXPO_ROUTER_APP_ROOT = projectRoot;
+process.env.EXPO_ROUTER_PROJECT_ROOT = projectRoot;
+
+// Also set on global for any code that checks there
+if (typeof global !== 'undefined') {
+  global.EXPO_ROUTER_APP_ROOT = projectRoot;
+  global.EXPO_ROUTER_PROJECT_ROOT = projectRoot;
 }
 
 const createExpoWebpackConfigAsync = require('@expo/webpack-config');
