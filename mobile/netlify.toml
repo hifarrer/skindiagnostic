@@ -1,7 +1,6 @@
 [build]
-  base = "mobile"
-  command = "npm install && npx expo export --platform web"
-  publish = "web-build"
+  command = "cd mobile && npm install && npx expo export --platform web"
+  publish = "mobile/web-build"
 
 [build.environment]
   NODE_VERSION = "20"

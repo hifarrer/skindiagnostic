@@ -9,14 +9,12 @@ This guide explains how to deploy your Expo web app using Metro bundler to vario
 1. **Sign up** at [netlify.com](https://netlify.com) and connect your GitHub repository
 
 2. **Configure Site Settings:**
-   - **Base directory**: `mobile` (IMPORTANT: Must be set to `mobile`)
-   - **Build command**: `npm install && npx expo export --platform web`
-   - **Publish directory**: `web-build` (NOT `mobile/web-build` - just `web-build`)
+   - **Base directory**: Leave EMPTY (or set to root `/`)
+   - **Build command**: `cd mobile && npm install && npx expo export --platform web`
+   - **Publish directory**: `mobile/web-build`
    - **Node version**: `20` (set in Environment Variables)
    
-   **Note**: If Netlify UI shows `mobile/web-build` in the publish directory field, you can:
-   - Either manually type `web-build` (without the `mobile/` prefix)
-   - Or leave it empty and let `netlify.toml` handle it (the file is already configured)
+   **Note**: Since Netlify requires `mobile/web-build` in the publish directory field, we set the base directory to root and use `cd mobile` in the build command.
 
 3. **Add Environment Variables:**
    Go to Site settings → Environment variables and add:
