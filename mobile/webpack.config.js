@@ -73,6 +73,18 @@ module.exports = async function (env, argv) {
     async_hooks: false,
     v8: false,
     vm: false,
+    constants: false,
+    domain: false,
+    punycode: false,
+    querystring: false,
+    string_decoder: false,
+    sys: false,
+    timers: false,
+    _stream_duplex: false,
+    _stream_passthrough: false,
+    _stream_readable: false,
+    _stream_transform: false,
+    _stream_writable: false,
   };
   
   // Add aliases for packages with native bindings that don't work in browser
