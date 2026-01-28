@@ -159,6 +159,9 @@ module.exports = async function (env, argv) {
     _stream_writable: false,
   };
   
+  // Ensure plugins array exists before adding plugins
+  config.plugins = config.plugins || [];
+  
   // Exclude scripts directory and lightningcss from webpack processing using IgnorePlugin
   // Scripts are build-time only, not part of the web bundle
   // lightningcss has native Node.js bindings that don't work in browser
@@ -179,9 +182,19 @@ module.exports = async function (env, argv) {
       resourceRegExp: /^lightningcss$/,
     })
   );
-
-  // Ensure plugins array exists and add our plugins
-  config.plugins = config.plugins || [];
+  
+  // Ensure resolve.alias exists and doesn't have false values
+  if (!config.resolve) {
+    config.resolve = {};
+  }
+  if (config.resolve.alias) {
+    // Remove any false values from aliases (they cause AliasPlugin errors)
+    Object.keys(config.resolve.alias).forEach(key => {
+      if (config.resolve.alias[key] === false) {
+        delete config.resolve.alias[key];
+      }
+    });
+  }
   
   // Add DefinePlugin to ensure EXPO_ROUTER_APP_ROOT is available at build time
   config.plugins.push(
