@@ -56,7 +56,8 @@ module.exports = async function (env, argv) {
     url: require.resolve('url'),
     zlib: require.resolve('browserify-zlib'),
     path: require.resolve('path-browserify'),
-    fs: false, // fs is not available in browser, scripts should not be bundled
+    fs: false, // fs is not available in browser
+    module: false, // Node.js built-in, not available in browser
   };
   
   // Add aliases for packages with native bindings that don't work in browser
