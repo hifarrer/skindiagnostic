@@ -91,28 +91,26 @@ module.exports = async function (env, argv) {
     })
   );
   
-  // Exclude problematic files from source-map-loader
-  // This prevents source-map-loader from trying to parse files it can't handle
+  // Disable source-map-loader entirely to avoid parsing errors
+  // Source maps from node_modules often cause "Cannot destructure property 'name'" errors
   if (config.module && config.module.rules) {
-    config.module.rules.forEach(rule => {
+    config.module.rules = config.module.rules.filter(rule => {
+      // Remove rules that use source-map-loader
       if (rule.use && Array.isArray(rule.use)) {
-        const sourceMapLoader = rule.use.find(loader => 
+        const hasSourceMapLoader = rule.use.some(loader => 
           typeof loader === 'string' && loader.includes('source-map-loader') ||
           typeof loader === 'object' && loader.loader && loader.loader.includes('source-map-loader')
         );
-        if (sourceMapLoader) {
-          // Exclude node_modules from source-map-loader to avoid parsing errors
-          if (!rule.exclude) {
-            rule.exclude = [];
-          } else if (!Array.isArray(rule.exclude)) {
-            rule.exclude = [rule.exclude];
-          }
-          // Exclude all node_modules from source-map-loader
-          if (!rule.exclude.some(ex => ex.toString().includes('node_modules'))) {
-            rule.exclude.push(/node_modules/);
-          }
+        if (hasSourceMapLoader) {
+          console.log('Removing source-map-loader rule to avoid parsing errors');
+          return false;
         }
       }
+      if (rule.loader && typeof rule.loader === 'string' && rule.loader.includes('source-map-loader')) {
+        console.log('Removing source-map-loader rule to avoid parsing errors');
+        return false;
+      }
+      return true;
     });
   }
   
