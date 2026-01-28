@@ -49,9 +49,29 @@ module.exports = async function (env, argv) {
           /scripts\//,
         ],
       },
+      // Disable CSS minimization to avoid dependency issues
+      mode: env.mode || 'production',
     },
     argv
   );
+  
+  // Disable CSS minimization immediately after config is created
+  // This prevents css-minimizer-webpack-plugin from being added
+  if (config.optimization) {
+    // Remove any existing CSS minimizer
+    if (config.optimization.minimizer && Array.isArray(config.optimization.minimizer)) {
+      config.optimization.minimizer = config.optimization.minimizer.filter(minimizer => {
+        if (!minimizer) return true;
+        const name = minimizer.constructor?.name || '';
+        // Remove CssMinimizerPlugin
+        if (name === 'CssMinimizerPlugin') {
+          console.log('Removing CssMinimizerPlugin to avoid dependency issues');
+          return false;
+        }
+        return true;
+      });
+    }
+  }
   
   // Exclude webpack.config.js and config files from babel processing
   // This prevents expo-router from trying to process webpack.config.js
@@ -164,14 +184,23 @@ module.exports = async function (env, argv) {
   
   // Disable CSS minimization to avoid esbuild/@parcel/css dependency issues
   // CSS minimization is optional and not critical for deployment
-  if (config.optimization && config.optimization.minimizer) {
-    config.optimization.minimizer = config.optimization.minimizer.filter(minimizer => {
-      // Remove CssMinimizerPlugin to avoid dependency issues
-      if (minimizer && minimizer.constructor && minimizer.constructor.name === 'CssMinimizerPlugin') {
-        return false;
-      }
-      return true;
-    });
+  if (config.optimization) {
+    // Remove CSS minimizer if it exists
+    if (config.optimization.minimizer) {
+      config.optimization.minimizer = config.optimization.minimizer.filter(minimizer => {
+        // Remove CssMinimizerPlugin to avoid dependency issues
+        const minimizerName = minimizer && minimizer.constructor ? minimizer.constructor.name : '';
+        if (minimizerName === 'CssMinimizerPlugin') {
+          return false;
+        }
+        return true;
+      });
+    }
+    // Also disable CSS optimization entirely
+    if (config.optimization.minimize !== undefined) {
+      // Keep JS minimization but we'll handle CSS separately
+      config.optimization.minimize = true;
+    }
   }
   
   // Exclude scripts directory and lightningcss from webpack processing using IgnorePlugin
