@@ -42,17 +42,15 @@ console.log('Setting fromDir to:', fromDirValue);
 // The file uses require.context with process.env.EXPO_ROUTER_APP_ROOT
 // Webpack's require.context needs the actual path, not an env var
 // We need to replace process.env.EXPO_ROUTER_APP_ROOT with the actual path value
+// Escape the path properly for use in a JavaScript string
+const escapedPath = fromDirValue.replace(/\\/g, '/').replace(/"/g, '\\"');
 const patchedContent = content.replace(
   /process\.env\.EXPO_ROUTER_APP_ROOT/g,
-  `"${fromDirValue.replace(/\\/g, '/')}"`
+  `"${escapedPath}"`
 );
 
-// Also add a comment at the top to mark it as patched
-const finalContent = `// PATCHED: fromDir fix for webpack builds - replaced process.env.EXPO_ROUTER_APP_ROOT with actual path
-${patchedContent}
-`;
-
-fs.writeFileSync(expoRouterPath, finalContent);
+// Write the patched content directly (no extra comments that might confuse webpack)
+fs.writeFileSync(expoRouterPath, patchedContent);
 console.log('Successfully patched expo-router _ctx.web.js with fromDir fix');
 console.log('Replaced process.env.EXPO_ROUTER_APP_ROOT with:', fromDirValue);
-console.log('Patched file size:', finalContent.length, 'bytes');
+console.log('Patched file size:', patchedContent.length, 'bytes');

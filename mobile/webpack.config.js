@@ -55,6 +55,7 @@ module.exports = async function (env, argv) {
     os: require.resolve('os-browserify/browser'),
     url: require.resolve('url'),
     zlib: require.resolve('browserify-zlib'),
+    path: require.resolve('path-browserify'),
   };
 
   // Ensure plugins array exists and add our plugins
