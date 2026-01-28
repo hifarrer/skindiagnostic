@@ -295,7 +295,7 @@ module.exports = async function (env, argv) {
   config.plugins.push(
     new webpack.ProvidePlugin({
       Buffer: ['buffer', 'Buffer'],
-      process: 'process/browser',
+      process: 'process/browser.js',
     })
   );
   
