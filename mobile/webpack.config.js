@@ -162,6 +162,25 @@ module.exports = async function (env, argv) {
   // Ensure plugins array exists before adding plugins
   config.plugins = config.plugins || [];
   
+  // Configure css-minimizer-webpack-plugin to use esbuild instead of @parcel/css
+  // This prevents the need for @parcel/css dependency
+  if (config.optimization && config.optimization.minimizer) {
+    config.optimization.minimizer = config.optimization.minimizer.map(minimizer => {
+      if (minimizer && minimizer.constructor && minimizer.constructor.name === 'CssMinimizerPlugin') {
+        // Force esbuild minimizer
+        const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
+        return new CssMinimizerPlugin({
+          minimizerOptions: {
+            preset: ['default', {
+              discardComments: { removeAll: true },
+            }],
+          },
+        });
+      }
+      return minimizer;
+    });
+  }
+  
   // Exclude scripts directory and lightningcss from webpack processing using IgnorePlugin
   // Scripts are build-time only, not part of the web bundle
   // lightningcss has native Node.js bindings that don't work in browser
