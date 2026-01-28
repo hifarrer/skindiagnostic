@@ -16,9 +16,10 @@ if (!fs.existsSync(expoRouterPath)) {
 
 let content = fs.readFileSync(expoRouterPath, 'utf8');
 
-// Check if already patched
-if (content.includes('// PATCHED: fromDir fix')) {
-  console.log('expo-router already patched');
+// Check if already patched - look for the replaced path pattern instead of comment
+// The patched file will have a quoted absolute path instead of process.env.EXPO_ROUTER_APP_ROOT
+if (!content.includes('process.env.EXPO_ROUTER_APP_ROOT')) {
+  console.log('expo-router already patched (process.env.EXPO_ROUTER_APP_ROOT not found)');
   process.exit(0);
 }
 
