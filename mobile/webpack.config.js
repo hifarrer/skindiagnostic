@@ -91,6 +91,31 @@ module.exports = async function (env, argv) {
     })
   );
   
+  // Exclude problematic files from source-map-loader
+  // This prevents source-map-loader from trying to parse files it can't handle
+  if (config.module && config.module.rules) {
+    config.module.rules.forEach(rule => {
+      if (rule.use && Array.isArray(rule.use)) {
+        const sourceMapLoader = rule.use.find(loader => 
+          typeof loader === 'string' && loader.includes('source-map-loader') ||
+          typeof loader === 'object' && loader.loader && loader.loader.includes('source-map-loader')
+        );
+        if (sourceMapLoader) {
+          // Exclude node_modules from source-map-loader to avoid parsing errors
+          if (!rule.exclude) {
+            rule.exclude = [];
+          } else if (!Array.isArray(rule.exclude)) {
+            rule.exclude = [rule.exclude];
+          }
+          // Exclude all node_modules from source-map-loader
+          if (!rule.exclude.some(ex => ex.toString().includes('node_modules'))) {
+            rule.exclude.push(/node_modules/);
+          }
+        }
+      }
+    });
+  }
+  
   // Exclude webpack.config.js and config files from babel processing
   // This prevents expo-router from trying to process webpack.config.js
   if (config.module && config.module.rules) {
