@@ -45,7 +45,11 @@ fi
 # Run the actual build command
 # Use expo export:web for webpack bundler (configured in app.json)
 # Set NODE_OPTIONS to load env setup before any code runs
+# Also export the variable so it's available to all child processes
+export EXPO_ROUTER_APP_ROOT="$MOBILE_DIR"
+export EXPO_ROUTER_PROJECT_ROOT="$MOBILE_DIR"
 echo "Build script: Running expo export:web..."
-NODE_OPTIONS="--require $MOBILE_DIR/scripts/set-expo-router-env.js" npx expo export:web
+echo "Build script: EXPO_ROUTER_APP_ROOT=$EXPO_ROUTER_APP_ROOT"
+NODE_OPTIONS="--require $MOBILE_DIR/scripts/set-expo-router-env.js" EXPO_ROUTER_APP_ROOT="$MOBILE_DIR" npx expo export:web
 
 echo "Build script: Build complete!"

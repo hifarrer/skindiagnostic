@@ -3,4 +3,5 @@
   publish = "web-build"
 
 [build.environment]
-  NODE_VERSION = "18"
+  NODE_VERSION = "20"
+  EXPO_ROUTER_APP_ROOT = "."
