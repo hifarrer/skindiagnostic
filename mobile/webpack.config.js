@@ -53,31 +53,6 @@ module.exports = async function (env, argv) {
     argv
   );
   
-  // Exclude TypeScript files from node_modules from all loaders
-  // This prevents errors when processing esbuild or @parcel/css TypeScript files
-  if (config.module && config.module.rules) {
-    config.module.rules.forEach(rule => {
-      // Add exclude for TypeScript files in node_modules to all rules
-      if (!rule.exclude) {
-        rule.exclude = [];
-      } else if (!Array.isArray(rule.exclude)) {
-        rule.exclude = [rule.exclude];
-      }
-      // Exclude TypeScript files from node_modules (especially esbuild and @parcel)
-      if (!rule.exclude.some(ex => ex.toString().includes('node_modules.*\\.ts'))) {
-        rule.exclude.push(/node_modules\/.*\.ts$/);
-        rule.exclude.push(/node_modules\/.*\.tsx$/);
-      }
-      // Specifically exclude esbuild and @parcel packages
-      if (!rule.exclude.some(ex => ex.toString().includes('esbuild'))) {
-        rule.exclude.push(/node_modules\/esbuild/);
-      }
-      if (!rule.exclude.some(ex => ex.toString().includes('@parcel'))) {
-        rule.exclude.push(/node_modules\/@parcel/);
-      }
-    });
-  }
-  
   // Exclude webpack.config.js and config files from babel processing
   // This prevents expo-router from trying to process webpack.config.js
   if (config.module && config.module.rules) {
@@ -187,23 +162,15 @@ module.exports = async function (env, argv) {
   // Ensure plugins array exists before adding plugins
   config.plugins = config.plugins || [];
   
-  // Configure css-minimizer-webpack-plugin to use esbuild instead of @parcel/css
-  // The plugin checks for @parcel/css at load time, so we need to install it
-  // But we can configure it to use esbuild at runtime
+  // Disable CSS minimization to avoid esbuild/@parcel/css dependency issues
+  // CSS minimization is optional and not critical for deployment
   if (config.optimization && config.optimization.minimizer) {
-    const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
-    config.optimization.minimizer = config.optimization.minimizer.map(minimizer => {
-      // Check if this is a CssMinimizerPlugin instance
+    config.optimization.minimizer = config.optimization.minimizer.filter(minimizer => {
+      // Remove CssMinimizerPlugin to avoid dependency issues
       if (minimizer && minimizer.constructor && minimizer.constructor.name === 'CssMinimizerPlugin') {
-        // Replace with a new instance configured to use esbuild
-        // Note: The plugin still needs @parcel/css installed, but we configure it to use esbuild
-        return new CssMinimizerPlugin({
-          minimizerOptions: {
-            implementation: require('esbuild'),
-          },
-        });
+        return false;
       }
-      return minimizer;
+      return true;
     });
   }
   
@@ -225,22 +192,6 @@ module.exports = async function (env, argv) {
   config.plugins.push(
     new webpack.IgnorePlugin({
       resourceRegExp: /^lightningcss$/,
-    })
-  );
-  
-  // Ignore TypeScript files from esbuild and @parcel packages
-  // These packages include TypeScript source files that webpack tries to process
-  config.plugins.push(
-    new webpack.IgnorePlugin({
-      resourceRegExp: /\.ts$/,
-      contextRegExp: /node_modules\/(esbuild|@parcel)/,
-    })
-  );
-  
-  config.plugins.push(
-    new webpack.IgnorePlugin({
-      resourceRegExp: /\.tsx$/,
-      contextRegExp: /node_modules\/(esbuild|@parcel)/,
     })
   );
   
