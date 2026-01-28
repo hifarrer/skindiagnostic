@@ -1,11 +1,20 @@
+// CRITICAL: Set EXPO_ROUTER_APP_ROOT BEFORE any requires
+// This must be at the very top to prevent expo-router from failing during module loading
+const path = require('path');
+const projectRoot = path.resolve(__dirname);
+if (!process.env.EXPO_ROUTER_APP_ROOT) {
+  process.env.EXPO_ROUTER_APP_ROOT = projectRoot;
+}
+if (!process.env.EXPO_ROUTER_PROJECT_ROOT) {
+  process.env.EXPO_ROUTER_PROJECT_ROOT = projectRoot;
+}
+
 const createExpoWebpackConfigAsync = require('@expo/webpack-config');
 const webpack = require('webpack');
-const path = require('path');
 
 module.exports = async function (env, argv) {
   // Ensure projectRoot is set for Expo Router
   // Use __dirname to get the directory where webpack.config.js is located
-  const projectRoot = path.resolve(__dirname);
   
   // Set environment variable for Expo Router (use env var if set, otherwise use projectRoot)
   // If EXPO_ROUTER_APP_ROOT is already an absolute path, use it; otherwise resolve relative to projectRoot
