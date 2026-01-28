@@ -1,0 +1,6 @@
+[build]
+  command = "npm install && chmod +x build-web.sh && ./build-web.sh"
+  publish = "web-build"
+
+[build.environment]
+  NODE_VERSION = "18"

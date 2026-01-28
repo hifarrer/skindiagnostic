@@ -9,6 +9,7 @@
     "web": "expo start --web",
     "prebuild:web": "node scripts/pre-build.js",
     "build:web": "bash build-web.sh",
+    "build": "chmod +x build-web.sh && ./build-web.sh",
     "postinstall": "patch-package"
   },
   "dependencies": {
