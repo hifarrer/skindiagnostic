@@ -43,12 +43,11 @@ if [ -f "$MOBILE_DIR/scripts/patch-expo-router.js" ]; then
 fi
 
 # Run the actual build command
-# Use expo export --platform web for Metro bundler (configured in app.json)
-# Metro is simpler and doesn't need the webpack patches
+# Use expo export:web for webpack bundler (configured in app.json)
 export EXPO_ROUTER_APP_ROOT="$MOBILE_DIR"
 export EXPO_ROUTER_PROJECT_ROOT="$MOBILE_DIR"
-echo "Build script: Running expo export --platform web (Metro)..."
+echo "Build script: Running expo export:web (Webpack)..."
 echo "Build script: EXPO_ROUTER_APP_ROOT=$EXPO_ROUTER_APP_ROOT"
-npx expo export --platform web
+npx expo export:web
 
 echo "Build script: Build complete!"
