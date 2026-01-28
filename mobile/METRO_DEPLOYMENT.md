@@ -71,22 +71,37 @@ This guide explains how to deploy your Expo web app using Metro bundler to vario
 
 ---
 
-### Option 3: Vercel
+### Option 3: Vercel (RECOMMENDED - Often Works Better)
+
+Vercel is often easier for Expo apps and handles the directory structure better.
 
 1. **Sign up** at [vercel.com](https://vercel.com) and connect GitHub
 
 2. **Import Project:**
    - Select your repository
-   - **Root Directory**: `mobile`
+   - **Root Directory**: Leave as root (don't set to `mobile`)
    - **Framework Preset**: Other
-   - **Build Command**: `npm install && npx expo export --platform web`
-   - **Output Directory**: `web-build`
+   - **Build Command**: `cd mobile && npm install && npx expo export --platform web`
+   - **Output Directory**: `mobile/web-build`
+   - Vercel will automatically detect `vercel.json` if present
 
-3. **Add Environment Variables** (same as above)
+3. **Add Environment Variables:**
+   ```
+   EXPO_PUBLIC_API_URL=https://your-backend-url.com/api
+   EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY=your-stripe-key
+   EXPO_PUBLIC_GOOGLE_CLIENT_ID=your-google-client-id
+   EXPO_PUBLIC_FACEBOOK_APP_ID=your-facebook-app-id
+   ```
 
 4. **Deploy:**
    - Click "Deploy"
    - You'll get a URL like: `https://your-app.vercel.app`
+   
+**Why Vercel might work better:**
+- Better handling of monorepo structures
+- More flexible directory configuration
+- Better error messages
+- Free tier with good limits
 
 ---
 
