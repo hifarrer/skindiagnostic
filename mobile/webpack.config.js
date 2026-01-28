@@ -159,21 +159,24 @@ module.exports = async function (env, argv) {
     _stream_writable: false,
   };
   
-  // Add aliases for packages with native bindings that don't work in browser
-  config.resolve.alias = {
-    ...config.resolve.alias,
-    // lightningcss has native Node.js bindings that don't work in browser
-    'lightningcss': false,
-  };
-  
-  // Exclude scripts directory from webpack processing using IgnorePlugin
+  // Exclude scripts directory and lightningcss from webpack processing using IgnorePlugin
   // Scripts are build-time only, not part of the web bundle
+  // lightningcss has native Node.js bindings that don't work in browser
   // Convert projectRoot to RegExp by escaping special characters
   const projectRootRegex = new RegExp(projectRoot.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+  
+  // Ignore scripts directory
   config.plugins.push(
     new webpack.IgnorePlugin({
       resourceRegExp: /scripts/,
       contextRegExp: projectRootRegex,
+    })
+  );
+  
+  // Ignore lightningcss - it has native bindings that don't work in browser
+  config.plugins.push(
+    new webpack.IgnorePlugin({
+      resourceRegExp: /^lightningcss$/,
     })
   );
 
