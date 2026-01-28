@@ -1,7 +1,7 @@
 services:
   - type: static
     name: aimakeup-frontend
-    buildCommand: npm install && chmod +x build-web.sh && bash build-web.sh
+    buildCommand: npm install && npx expo export --platform web
     staticPublishPath: ./web-build
     envVars:
       - key: EXPO_PUBLIC_API_URL

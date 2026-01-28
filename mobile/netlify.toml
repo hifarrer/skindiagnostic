@@ -1,7 +1,6 @@
 [build]
-  command = "npm install && chmod +x build-web.sh && ./build-web.sh"
+  command = "npm install && npx expo export --platform web"
   publish = "web-build"
 
 [build.environment]
   NODE_VERSION = "20"
-  EXPO_ROUTER_APP_ROOT = "."
