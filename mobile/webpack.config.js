@@ -61,10 +61,12 @@ module.exports = async function (env, argv) {
   
   // Exclude scripts directory from webpack processing using IgnorePlugin
   // Scripts are build-time only, not part of the web bundle
+  // Convert projectRoot to RegExp by escaping special characters
+  const projectRootRegex = new RegExp(projectRoot.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
   config.plugins.push(
     new webpack.IgnorePlugin({
-      resourceRegExp: /^\.\/scripts\//,
-      contextRegExp: projectRoot,
+      resourceRegExp: /scripts/,
+      contextRegExp: projectRootRegex,
     })
   );
 
