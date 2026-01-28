@@ -163,13 +163,15 @@ module.exports = async function (env, argv) {
   config.plugins = config.plugins || [];
   
   // Configure css-minimizer-webpack-plugin to use esbuild instead of @parcel/css
-  // This prevents the need for @parcel/css dependency
+  // The plugin checks for @parcel/css at load time, so we need to install it
+  // But we can configure it to use esbuild at runtime
   if (config.optimization && config.optimization.minimizer) {
     const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
     config.optimization.minimizer = config.optimization.minimizer.map(minimizer => {
       // Check if this is a CssMinimizerPlugin instance
       if (minimizer && minimizer.constructor && minimizer.constructor.name === 'CssMinimizerPlugin') {
         // Replace with a new instance configured to use esbuild
+        // Note: The plugin still needs @parcel/css installed, but we configure it to use esbuild
         return new CssMinimizerPlugin({
           minimizerOptions: {
             implementation: require('esbuild'),
