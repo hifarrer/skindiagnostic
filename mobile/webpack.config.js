@@ -187,10 +187,13 @@ module.exports = async function (env, argv) {
   if (!config.resolve) {
     config.resolve = {};
   }
-  if (config.resolve.alias) {
+  if (!config.resolve.alias) {
+    config.resolve.alias = {};
+  } else {
     // Remove any false values from aliases (they cause AliasPlugin errors)
     Object.keys(config.resolve.alias).forEach(key => {
       if (config.resolve.alias[key] === false) {
+        console.warn(`Removing false alias: ${key}`);
         delete config.resolve.alias[key];
       }
     });
