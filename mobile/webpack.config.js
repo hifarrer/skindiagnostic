@@ -36,16 +36,36 @@ module.exports = async function (env, argv) {
       projectRoot: projectRoot,
       babel: {
         dangerouslyAddModulePathsToTranspile: ['expo-modules-core', 'expo-router'],
-        // Exclude webpack.config.js from babel processing to prevent expo-router fromDir error
-        exclude: [
-          /webpack\.config\.js$/,
-          /\.config\.js$/,
-          /scripts\//,
-        ],
       },
     },
     argv
   );
+  
+  // Exclude webpack.config.js and config files from babel processing
+  // This prevents expo-router from trying to process webpack.config.js
+  if (config.module && config.module.rules) {
+    config.module.rules.forEach(rule => {
+      if (rule.use) {
+        const useArray = Array.isArray(rule.use) ? rule.use : [rule.use];
+        useArray.forEach(use => {
+          if (typeof use === 'object' && use.loader && use.loader.includes('babel-loader')) {
+            if (!rule.exclude) {
+              rule.exclude = [];
+            } else if (!Array.isArray(rule.exclude)) {
+              rule.exclude = [rule.exclude];
+            }
+            // Exclude webpack.config.js and other config files
+            if (!rule.exclude.some(ex => ex.toString().includes('webpack.config'))) {
+              rule.exclude.push(/webpack\.config\.js$/);
+            }
+            if (!rule.exclude.some(ex => ex.toString().includes('\.config\.js'))) {
+              rule.exclude.push(/\.config\.js$/);
+            }
+          }
+        });
+      }
+    });
+  }
   
   // Exclude webpack.config.js and other config files from babel/expo-router processing
   if (!config.module) {
