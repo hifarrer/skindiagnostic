@@ -41,6 +41,13 @@ module.exports = async function (env, argv) {
       projectRoot: projectRoot,
       babel: {
         dangerouslyAddModulePathsToTranspile: ['expo-modules-core', 'expo-router'],
+        // CRITICAL: Exclude webpack.config.js from babel processing
+        // This prevents expo-router's babel plugin from processing it and checking for fromDir
+        exclude: [
+          /webpack\.config\.js$/,
+          /\.config\.js$/,
+          /scripts\//,
+        ],
       },
     },
     argv
