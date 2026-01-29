@@ -57,7 +57,7 @@ export default function LoginScreen() {
       <View style={styles.container}>
         <View style={styles.content}>
           <View style={styles.header}>
-            <Text style={styles.title}>SkingDiagnostics.AI</Text>
+            <Text style={styles.title}>SkinDiagnostics.AI</Text>
             <Text style={styles.subtitle}>Your AI-Powered Skin Health Companion</Text>
           </View>
 
@@ -118,7 +118,7 @@ const styles = StyleSheet.create({
     marginBottom: 40,
   },
   title: {
-    fontSize: 36,
+    fontSize: 28,
     fontWeight: 'bold',
     color: Colors.text.darkBlue,
     marginBottom: 12,
