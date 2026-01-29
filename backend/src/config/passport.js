@@ -19,27 +19,25 @@ passport.deserializeUser(async (id, done) => {
 
 // Google Strategy
 if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
-  // Construct full callback URL for OAuth
-  // Use environment variable if set, otherwise construct from request
-  const getCallbackURL = (req) => {
-    if (process.env.OAUTH_CALLBACK_URL) {
-      return process.env.OAUTH_CALLBACK_URL;
-    }
-    // For Vercel, use the full URL
-    const protocol = req?.protocol || (req?.secure ? 'https' : 'http') || 'https';
-    const host = req?.get?.('host') || process.env.VERCEL_URL || process.env.BACKEND_URL || 'localhost:3000';
-    return `${protocol}://${host}/api/auth/oauth/google/callback`;
-  };
+  // Determine the callback URL
+  // Priority: OAUTH_CALLBACK_URL > BACKEND_URL > relative path
+  let googleCallbackURL = '/api/auth/oauth/google/callback';
+  if (process.env.OAUTH_CALLBACK_URL) {
+    googleCallbackURL = process.env.OAUTH_CALLBACK_URL;
+  } else if (process.env.BACKEND_URL) {
+    googleCallbackURL = `${process.env.BACKEND_URL}/api/auth/oauth/google/callback`;
+  }
+  
+  console.log('Google OAuth callback URL:', googleCallbackURL);
 
   passport.use(
     new GoogleStrategy(
       {
         clientID: process.env.GOOGLE_CLIENT_ID,
         clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-        callbackURL: process.env.OAUTH_CALLBACK_URL || process.env.BACKEND_URL ? `${process.env.BACKEND_URL}/api/auth/oauth/google/callback` : '/api/auth/oauth/google/callback',
-        passReqToCallback: true, // Allow access to request object
+        callbackURL: googleCallbackURL,
       },
-      async (req, accessToken, refreshToken, profile, done) => {
+      async (accessToken, refreshToken, profile, done) => {
         try {
           let user = await User.findByOAuth('google', profile.id);
           
