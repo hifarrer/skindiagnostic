@@ -21,7 +21,7 @@ export default function HomeScreen() {
     >
       <View style={styles.container}>
         <View style={styles.header}>
-          <Text style={styles.appTitle}>SkingDiagnostics.AI</Text>
+          <Text style={styles.appTitle}>SkinDiagnostics.AI</Text>
         </View>
 
         <View style={styles.spacer} />

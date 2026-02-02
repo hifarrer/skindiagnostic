@@ -2,8 +2,10 @@ import React from 'react';
 import { Stack } from 'expo-router';
 import { AuthProvider } from '../contexts/AuthContext';
 import { StatusBar } from 'expo-status-bar';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, Platform } from 'react-native';
 import { Colors } from '../constants/Colors';
+import DesktopWrapper from '../components/DesktopWrapper';
+import { useIsDesktop } from '../hooks/useIsDesktop';
 
 // Simple error boundary
 class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean; error: Error | null }> {
@@ -33,27 +35,42 @@ class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { has
   }
 }
 
+function AppContent() {
+  return (
+    <Stack
+      screenOptions={{
+        headerStyle: {
+          backgroundColor: Colors.primary.pink,
+        },
+        headerTintColor: Colors.white,
+        headerTitleStyle: {
+          fontWeight: 'bold',
+        },
+      }}
+    >
+      <Stack.Screen name="index" options={{ headerShown: false }} />
+      <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+      <Stack.Screen name="auth" options={{ headerShown: false }} />
+      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+    </Stack>
+  );
+}
+
 export default function RootLayout() {
+  const isDesktop = useIsDesktop();
+  const shouldWrap = Platform.OS === 'web' && isDesktop;
+
   return (
     <ErrorBoundary>
       <AuthProvider>
         <StatusBar style="light" />
-        <Stack
-          screenOptions={{
-            headerStyle: {
-              backgroundColor: Colors.primary.pink,
-            },
-            headerTintColor: Colors.white,
-            headerTitleStyle: {
-              fontWeight: 'bold',
-            },
-          }}
-        >
-          <Stack.Screen name="index" options={{ headerShown: false }} />
-          <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-          <Stack.Screen name="auth" options={{ headerShown: false }} />
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        </Stack>
+        {shouldWrap ? (
+          <DesktopWrapper>
+            <AppContent />
+          </DesktopWrapper>
+        ) : (
+          <AppContent />
+        )}
       </AuthProvider>
     </ErrorBoundary>
   );

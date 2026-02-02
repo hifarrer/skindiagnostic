@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "SkingDiagnostics.AI",
+    "name": "SkinDiagnostics.AI",
     "slug": "aimakeup",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -33,13 +33,13 @@
       [
         "expo-camera",
         {
-          "cameraPermission": "Allow SkingDiagnostics.AI to access your camera to analyze your skin."
+          "cameraPermission": "Allow SkinDiagnostics.AI to access your camera to analyze your skin."
         }
       ],
       [
         "expo-image-picker",
         {
-          "photosPermission": "Allow SkingDiagnostics.AI to access your photos to upload images for analysis."
+          "photosPermission": "Allow SkinDiagnostics.AI to access your photos to upload images for analysis."
         }
       ]
     ],

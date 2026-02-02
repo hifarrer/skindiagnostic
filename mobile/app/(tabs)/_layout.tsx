@@ -1,12 +1,14 @@
 import { Tabs, useRouter } from 'expo-router';
 import { Colors } from '../../constants/Colors';
-import { Text, View } from 'react-native';
+import { Text, View, Platform } from 'react-native';
 import { useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
+import { useIsDesktop } from '../../hooks/useIsDesktop';
 
 export default function TabsLayout() {
   const { user, loading } = useAuth();
   const router = useRouter();
+  const isDesktop = useIsDesktop();
 
   useEffect(() => {
     if (!loading && !user) {
@@ -20,19 +22,24 @@ export default function TabsLayout() {
     return null;
   }
 
+  // Hide tab bar on desktop web
+  const tabBarStyle = Platform.OS === 'web' && isDesktop 
+    ? { display: 'none' as const }
+    : {
+        backgroundColor: Colors.gray.darker,
+        borderTopWidth: 0,
+        height: 60,
+        paddingBottom: 8,
+        paddingTop: 8,
+      };
+
   return (
     <Tabs
       screenOptions={{
         tabBarActiveTintColor: Colors.primary.orange,
         tabBarInactiveTintColor: Colors.gray.dark,
         headerShown: false,
-        tabBarStyle: {
-          backgroundColor: Colors.gray.darker,
-          borderTopWidth: 0,
-          height: 60,
-          paddingBottom: 8,
-          paddingTop: 8,
-        },
+        tabBarStyle,
         tabBarLabelStyle: {
           fontSize: 12,
           fontWeight: '500',
