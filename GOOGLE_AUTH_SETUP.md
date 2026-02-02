@@ -29,7 +29,7 @@ This guide will walk you through setting up Google OAuth authentication for the 
 3. Click on it and click **"Enable"**
 
 > **Note:** Google+ API is deprecated, but we can use **"People API"** instead. However, for OAuth, we mainly need the OAuth consent screen.
-
+    
 ### 1.4 Configure OAuth Consent Screen
 
 1. Go to **"APIs & Services"** > **"OAuth consent screen"**

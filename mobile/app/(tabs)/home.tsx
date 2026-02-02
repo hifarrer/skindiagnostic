@@ -34,6 +34,7 @@ export default function HomeScreen() {
             <View style={styles.card}>
               <Text style={styles.cardTitle}>Quick Actions</Text>
               <View style={styles.actionGrid}>
+                {/* Try Makeup - Commented out but functionality preserved
                 <TouchableOpacity 
                   style={styles.actionButton}
                   onPress={() => router.push('/(tabs)/makeup')}
@@ -41,6 +42,7 @@ export default function HomeScreen() {
                   <Text style={styles.actionIcon}>💄</Text>
                   <Text style={styles.actionLabel}>Try Makeup</Text>
                 </TouchableOpacity>
+                */}
                 <TouchableOpacity 
                   style={styles.actionButton}
                   onPress={() => router.push('/(tabs)/skin-analysis')}
@@ -48,6 +50,7 @@ export default function HomeScreen() {
                   <Text style={styles.actionIcon}>🔬</Text>
                   <Text style={styles.actionLabel}>Skin Analysis</Text>
                 </TouchableOpacity>
+                {/* AI Look Try-On - Commented out but functionality preserved
                 <TouchableOpacity 
                   style={styles.actionButton}
                   onPress={() => router.push('/(tabs)/looks')}
@@ -55,6 +58,7 @@ export default function HomeScreen() {
                   <Text style={styles.actionIcon}>✨</Text>
                   <Text style={styles.actionLabel}>AI Look Try-On</Text>
                 </TouchableOpacity>
+                */}
                 <TouchableOpacity 
                   style={styles.actionButton}
                   onPress={() => router.push('/(tabs)/statistics')}
