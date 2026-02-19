@@ -66,12 +66,15 @@ EXPO_PUBLIC_API_URL=http://localhost:3000/api
 EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY=your-stripe-key
 ```
 
-4. Start Expo for web:
+4. **Google Login (local):** The app runs on port 8081; the backend runs on 3000. When you click "Continue with Google" you are sent to `http://localhost:3000` to sign in, then back to 8081. **Ensure the backend is running** on port 3000. In Google Cloud Console, add `http://localhost:3000/api/auth/oauth/google/callback` as an authorized redirect URI.  
+   **To keep the app on 8081 during login** (no redirect to 3000), use the dev proxy: run `node scripts/dev-proxy.js` in the mobile folder (see script comments for full setup and env vars).
+
+5. Start Expo for web:
 ```bash
 npm run web
 ```
 
-Or use the interactive menu:
+   Or use the interactive menu:
 ```bash
 npm start
 # Then press 'w' for web

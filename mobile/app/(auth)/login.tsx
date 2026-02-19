@@ -7,8 +7,10 @@ import {
   Alert,
   ActivityIndicator,
   ImageBackground,
+  Platform,
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '../../contexts/AuthContext';
 import { authService } from '../../services/authService';
 import { Colors } from '../../constants/Colors';
@@ -57,7 +59,9 @@ export default function LoginScreen() {
       <View style={styles.container}>
         <View style={styles.content}>
           <View style={styles.header}>
-            <Text style={styles.title}>SkinDiagnostics.AI</Text>
+            <Text style={styles.title}>
+              SkinDiagnostics.<Text style={styles.titleAccent}>AI</Text>
+            </Text>
             <Text style={styles.subtitle}>Your AI-Powered Skin Health Companion</Text>
           </View>
 
@@ -65,17 +69,24 @@ export default function LoginScreen() {
             <TouchableOpacity
               style={[styles.button, loading && styles.buttonDisabled]}
               onPress={handleGoogleLogin}
-              activeOpacity={0.8}
+              activeOpacity={0.86}
               disabled={loading}
             >
-              {loading ? (
-                <ActivityIndicator color={Colors.primary.pink} />
-              ) : (
-                <>
-                  <Text style={styles.googleIcon}>G</Text>
-                  <Text style={styles.buttonText}>Continue with Google</Text>
-                </>
-              )}
+              <LinearGradient
+                colors={['#7B5CFF', '#FF5EA8', '#FF8A4C']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.buttonGradient}
+              >
+                {loading ? (
+                  <ActivityIndicator color={Colors.white} />
+                ) : (
+                  <>
+                    <Text style={styles.googleIcon}>G</Text>
+                    <Text style={styles.buttonText}>Continue with Google</Text>
+                  </>
+                )}
+              </LinearGradient>
             </TouchableOpacity>
           </View>
 
@@ -104,49 +115,65 @@ const styles = StyleSheet.create({
     width: '85%',
     maxWidth: 400,
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
-    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.92)',
+    borderRadius: 28,
     padding: 40,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.8)',
+    shadowColor: '#1f2430',
+    shadowOffset: { width: 0, height: 14 },
+    shadowOpacity: 0.12,
+    shadowRadius: 40,
     elevation: 8,
+    ...(Platform.OS === 'web'
+      ? {
+          boxShadow: '0 18px 45px rgba(31, 36, 48, 0.14)',
+        } as any
+      : {}),
   },
   header: {
     alignItems: 'center',
-    marginBottom: 40,
+    marginBottom: 36,
   },
   title: {
     fontSize: 28,
-    fontWeight: 'bold',
-    color: Colors.text.darkBlue,
-    marginBottom: 12,
+    fontWeight: '800',
+    color: '#1f2430',
+    marginBottom: 10,
     textAlign: 'center',
+    fontFamily: 'Inter, system-ui, sans-serif',
+  },
+  titleAccent: {
+    color: '#7B5CFF',
+    fontWeight: '800',
+    fontFamily: 'Inter, system-ui, sans-serif',
   },
   subtitle: {
     fontSize: 16,
-    color: Colors.text.primary,
+    color: '#5b6070',
     textAlign: 'center',
-    lineHeight: 22,
+    lineHeight: 24,
+    fontFamily: 'Inter, system-ui, sans-serif',
   },
   buttonContainer: {
     width: '100%',
-    marginBottom: 30,
+    marginBottom: 28,
   },
   button: {
-    backgroundColor: Colors.primary.orange,
+    borderRadius: 999,
+    overflow: 'hidden',
+    shadowColor: '#FF5EA8',
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.2,
+    shadowRadius: 24,
+    elevation: 6,
+  },
+  buttonGradient: {
     paddingVertical: 16,
-    paddingHorizontal: 32,
-    borderRadius: 30,
+    paddingHorizontal: 28,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
     gap: 12,
   },
   buttonDisabled: {
@@ -161,13 +188,15 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     color: Colors.white,
-    fontSize: 17,
-    fontWeight: '600',
+    fontSize: 16,
+    fontWeight: '700',
+    fontFamily: 'Inter, system-ui, sans-serif',
   },
   footerText: {
-    color: Colors.text.primary,
+    color: '#5b6070',
     fontSize: 14,
     textAlign: 'center',
-    marginTop: 20,
+    marginTop: 8,
+    fontFamily: 'Inter, system-ui, sans-serif',
   },
 });

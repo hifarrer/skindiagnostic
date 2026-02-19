@@ -49,9 +49,13 @@ function AppContent() {
       }}
     >
       <Stack.Screen name="index" options={{ headerShown: false }} />
+      <Stack.Screen name="landing" options={{ headerShown: false }} />
       <Stack.Screen name="(auth)" options={{ headerShown: false }} />
       <Stack.Screen name="auth" options={{ headerShown: false }} />
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+      <Stack.Screen name="privacy-policy" options={{ headerShown: false }} />
+      <Stack.Screen name="terms-of-use" options={{ headerShown: false }} />
+      <Stack.Screen name="contact" options={{ headerShown: false }} />
     </Stack>
   );
 }

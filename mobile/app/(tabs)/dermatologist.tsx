@@ -9,7 +9,9 @@ import {
   ActivityIndicator,
   Linking,
   Alert,
+  Platform,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Colors } from '../../constants/Colors';
 import { dermatologistService, Dermatologist } from '../../services/dermatologistService';
 
@@ -83,15 +85,23 @@ export default function DermatologistScreen() {
               maxLength={5}
             />
             <TouchableOpacity
-              style={[styles.searchButton, loading && styles.searchButtonDisabled]}
+              style={[styles.searchButtonWrap, loading && styles.searchButtonDisabled]}
               onPress={handleSearch}
               disabled={loading}
+              activeOpacity={0.86}
             >
-              {loading ? (
-                <ActivityIndicator size="small" color={Colors.white} />
-              ) : (
-                <Text style={styles.searchButtonText}>Search</Text>
-              )}
+              <LinearGradient
+                colors={Colors.landing.gradientPurplePink}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.searchButton}
+              >
+                {loading ? (
+                  <ActivityIndicator size="small" color={Colors.white} />
+                ) : (
+                  <Text style={styles.searchButtonText}>Search</Text>
+                )}
+              </LinearGradient>
             </TouchableOpacity>
           </View>
         </View>
@@ -191,99 +201,125 @@ export default function DermatologistScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background.lightBlue,
+    backgroundColor: '#f7fbff',
   },
   header: {
-    padding: 30,
-    paddingTop: 60,
-    paddingBottom: 40,
-    backgroundColor: Colors.white,
+    padding: 28,
+    paddingTop: 36,
+    paddingBottom: 28,
+    backgroundColor: Colors.landing.cardBg,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.landing.cardBorder,
   },
   title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: Colors.text.darkBlue,
-    marginBottom: 8,
+    fontSize: 26,
+    fontWeight: '800',
+    color: Colors.landing.dark,
+    marginBottom: 6,
+    fontFamily: Colors.landing.fontFamily,
   },
   subtitle: {
-    fontSize: 16,
-    color: Colors.gray.dark,
+    fontSize: 15,
+    color: Colors.landing.muted,
     lineHeight: 22,
+    fontFamily: Colors.landing.fontFamily,
   },
   content: {
-    padding: 20,
+    padding: 24,
   },
   searchCard: {
-    backgroundColor: Colors.white,
-    borderRadius: 12,
-    padding: 20,
+    borderRadius: 26,
+    padding: 24,
     marginBottom: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    borderWidth: 1,
+    borderColor: Colors.landing.cardBorder,
+    shadowColor: '#1f2430',
+    shadowOffset: { width: 0, height: 14 },
     shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
+    shadowRadius: 28,
+    elevation: 4,
+    ...(Platform.OS === 'web'
+      ? {
+          backgroundImage: 'linear-gradient(180deg, rgba(255,255,255,.72), rgba(255,255,255,.40))',
+          boxShadow: '0 14px 30px rgba(31,36,48,.10)',
+        } as any
+      : { backgroundColor: Colors.landing.cardBg }),
   },
   searchTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
-    color: Colors.text.primary,
-    marginBottom: 15,
+    fontWeight: '700',
+    color: Colors.landing.dark,
+    marginBottom: 14,
+    fontFamily: Colors.landing.fontFamily,
   },
   searchContainer: {
     flexDirection: 'row',
-    gap: 10,
+    gap: 12,
   },
   zipcodeInput: {
     flex: 1,
-    backgroundColor: Colors.background.lightBlue,
-    borderRadius: 8,
-    padding: 15,
+    backgroundColor: 'rgba(255,255,255,.9)',
+    borderRadius: 14,
+    padding: 14,
     fontSize: 16,
-    color: Colors.text.primary,
+    color: Colors.landing.dark,
     borderWidth: 1,
-    borderColor: Colors.gray.light,
+    borderColor: Colors.landing.cardBorder,
+    fontFamily: Colors.landing.fontFamily,
+  },
+  searchButtonWrap: {
+    borderRadius: 999,
+    overflow: 'hidden',
+    shadowColor: Colors.landing.purple,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.2,
+    shadowRadius: 16,
+    elevation: 3,
   },
   searchButton: {
-    backgroundColor: Colors.primary.orange,
-    borderRadius: 8,
-    paddingHorizontal: 25,
-    paddingVertical: 15,
+    borderRadius: 999,
+    paddingHorizontal: 26,
+    paddingVertical: 14,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 5,
+    minWidth: 100,
   },
   searchButtonDisabled: {
     opacity: 0.6,
   },
   searchButtonText: {
-    fontSize: 16,
-    fontWeight: 'bold',
+    fontSize: 15,
+    fontWeight: '700',
     color: Colors.white,
+    fontFamily: Colors.landing.fontFamily,
   },
   resultsContainer: {
-    marginTop: 10,
+    marginTop: 12,
   },
   resultsTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
-    color: Colors.text.primary,
-    marginBottom: 15,
+    fontWeight: '700',
+    color: Colors.landing.dark,
+    marginBottom: 14,
+    fontFamily: Colors.landing.fontFamily,
   },
   dermatologistCard: {
-    backgroundColor: Colors.white,
-    borderRadius: 12,
+    borderRadius: 20,
     padding: 20,
-    marginBottom: 15,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: Colors.landing.cardBorder,
+    shadowColor: '#1f2430',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.08,
+    shadowRadius: 24,
     elevation: 3,
+    ...(Platform.OS === 'web'
+      ? {
+          backgroundImage: 'linear-gradient(180deg, rgba(255,255,255,.72), rgba(255,255,255,.42))',
+          boxShadow: '0 10px 26px rgba(31,36,48,.08)',
+        } as any
+      : { backgroundColor: Colors.landing.cardBg }),
   },
   dermatologistHeader: {
     flexDirection: 'row',
@@ -295,10 +331,11 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   dermatologistName: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: Colors.text.primary,
+    fontSize: 18,
+    fontWeight: '700',
+    color: Colors.landing.dark,
     marginBottom: 5,
+    fontFamily: Colors.landing.fontFamily,
   },
   ratingContainer: {
     flexDirection: 'row',
@@ -314,7 +351,7 @@ const styles = StyleSheet.create({
     color: Colors.text.primary,
   },
   distanceBadge: {
-    backgroundColor: Colors.primary.orange,
+    backgroundColor: Colors.landing.purple,
     borderRadius: 12,
     paddingHorizontal: 12,
     paddingVertical: 6,
@@ -394,37 +431,43 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   callButton: {
-    backgroundColor: Colors.accent.green,
+    backgroundColor: Colors.landing.purple,
   },
   directionsButton: {
-    backgroundColor: Colors.accent.blue,
+    backgroundColor: Colors.landing.cyan,
   },
   actionButtonText: {
-    fontSize: 14,
-    fontWeight: '600',
+    fontSize: 13,
+    fontWeight: '700',
     color: Colors.white,
+    fontFamily: Colors.landing.fontFamily,
   },
   noResultsCard: {
-    backgroundColor: Colors.white,
-    borderRadius: 12,
-    padding: 30,
+    borderRadius: 20,
+    padding: 28,
     alignItems: 'center',
-    marginTop: 10,
+    marginTop: 12,
+    borderWidth: 1,
+    borderColor: Colors.landing.cardBorder,
+    backgroundColor: Colors.landing.cardBg,
   },
   noResultsIcon: {
     fontSize: 48,
-    marginBottom: 15,
+    marginBottom: 14,
   },
   noResultsText: {
-    fontSize: 16,
-    color: Colors.gray.dark,
+    fontSize: 15,
+    color: Colors.landing.muted,
     textAlign: 'center',
     lineHeight: 24,
+    fontFamily: Colors.landing.fontFamily,
   },
   infoCard: {
-    backgroundColor: Colors.white,
-    borderRadius: 12,
-    padding: 20,
+    borderRadius: 20,
+    padding: 24,
+    borderWidth: 1,
+    borderColor: Colors.landing.cardBorder,
+    backgroundColor: Colors.landing.cardBg,
     marginTop: 10,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -434,13 +477,15 @@ const styles = StyleSheet.create({
   },
   infoTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
-    color: Colors.text.primary,
+    fontWeight: '700',
+    color: Colors.landing.dark,
     marginBottom: 10,
+    fontFamily: Colors.landing.fontFamily,
   },
   infoText: {
     fontSize: 14,
-    color: Colors.gray.dark,
+    color: Colors.landing.muted,
     lineHeight: 22,
+    fontFamily: Colors.landing.fontFamily,
   },
 });

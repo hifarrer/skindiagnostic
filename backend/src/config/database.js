@@ -50,8 +50,31 @@ pool.on('connect', () => {
 
 pool.on('error', (err) => {
   console.error('Unexpected error on idle client', err);
-  process.exit(-1);
+  // Don't exit - pool will create new connections; exiting kills the server on transient DB drops
 });
+
+function isConnectionError(err) {
+  const msg = (err && err.message) ? err.message : '';
+  return (
+    /connection terminated|Connection terminated|ECONNRESET|ECONNREFUSED|connection closed|terminated unexpectedly/i.test(msg)
+  );
+}
+
+/** Run a query with one retry on connection errors (e.g. idle connection closed by server). */
+export async function queryWithRetry(text, params) {
+  try {
+    return await pool.query(text, params);
+  } catch (err) {
+    if (isConnectionError(err)) {
+      try {
+        return await pool.query(text, params);
+      } catch (retryErr) {
+        throw retryErr;
+      }
+    }
+    throw err;
+  }
+}
 
 export default pool;
 

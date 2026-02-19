@@ -5,9 +5,11 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
+  Platform,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
+import { Colors } from '../../constants/Colors';
 
 export default function SubscriptionScreen() {
   const router = useRouter();
@@ -19,7 +21,8 @@ export default function SubscriptionScreen() {
       price: '$0',
       period: 'Forever',
       features: ['Basic skin analysis', 'Limited looks', 'Watermarked results'],
-      color: '#999',
+      gradient: ['#5b6070', '#3a3f52'] as const,
+      popular: false,
     },
     {
       id: 'premium',
@@ -27,7 +30,7 @@ export default function SubscriptionScreen() {
       price: '$9.99',
       period: 'per month',
       features: ['Unlimited analysis', 'All looks', 'HD results', 'Priority support'],
-      color: '#FF69B4',
+      gradient: Colors.landing.gradientPurplePink,
       popular: true,
     },
     {
@@ -36,19 +39,22 @@ export default function SubscriptionScreen() {
       price: '$19.99',
       period: 'per month',
       features: ['Everything in Premium', 'API access', 'Custom looks', 'White-label'],
-      color: '#9370DB',
+      gradient: ['#7B5CFF', '#5AD7FF'] as const,
+      popular: false,
     },
   ];
 
   return (
     <ScrollView style={styles.container}>
       <LinearGradient
-        colors={['#9370DB', '#8A2BE2']}
+        colors={Colors.landing.gradientPurplePink}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 0 }}
         style={styles.header}
       >
         <Text style={styles.title}>Choose Your Plan</Text>
         <Text style={styles.subtitle}>
-          Unlock the full potential of AiMakeup
+          Unlock the full potential of SkinDiagnostics.AI
         </Text>
       </LinearGradient>
 
@@ -79,16 +85,17 @@ export default function SubscriptionScreen() {
                 </View>
               ))}
             </View>
-            <TouchableOpacity
-              style={[
-                styles.subscribeButton,
-                { backgroundColor: plan.color },
-              ]}
-              onPress={() => {}}
-            >
-              <Text style={styles.subscribeText}>
-                {plan.id === 'free' ? 'Current Plan' : 'Subscribe'}
-              </Text>
+            <TouchableOpacity style={styles.subscribeButtonWrap} onPress={() => {}} activeOpacity={0.86}>
+              <LinearGradient
+                colors={plan.gradient}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.subscribeButton}
+              >
+                <Text style={styles.subscribeText}>
+                  {plan.id === 'free' ? 'Current Plan' : 'Subscribe'}
+                </Text>
+              </LinearGradient>
             </TouchableOpacity>
           </View>
         ))}
@@ -100,63 +107,72 @@ export default function SubscriptionScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#f7fbff',
   },
   header: {
-    padding: 30,
-    paddingTop: 60,
-    paddingBottom: 40,
+    padding: 28,
+    paddingTop: 36,
+    paddingBottom: 36,
   },
   title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#fff',
-    marginBottom: 8,
+    fontSize: 26,
+    fontWeight: '800',
+    color: Colors.white,
+    marginBottom: 6,
+    fontFamily: Colors.landing.fontFamily,
   },
   subtitle: {
-    fontSize: 16,
-    color: '#fff',
-    opacity: 0.9,
+    fontSize: 15,
+    color: 'rgba(255,255,255,0.92)',
+    fontFamily: Colors.landing.fontFamily,
   },
   content: {
-    padding: 20,
+    padding: 24,
   },
   planCard: {
-    backgroundColor: '#fff',
-    borderRadius: 15,
-    padding: 25,
+    borderRadius: 26,
+    padding: 26,
     marginBottom: 20,
-    borderWidth: 2,
-    borderColor: '#e0e0e0',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    borderWidth: 1,
+    borderColor: Colors.landing.cardBorder,
+    shadowColor: '#1f2430',
+    shadowOffset: { width: 0, height: 14 },
     shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
+    shadowRadius: 28,
+    elevation: 4,
+    ...(Platform.OS === 'web'
+      ? {
+          backgroundImage: 'linear-gradient(180deg, rgba(255,255,255,.72), rgba(255,255,255,.40))',
+          boxShadow: '0 14px 30px rgba(31,36,48,.10)',
+        } as any
+      : { backgroundColor: Colors.landing.cardBg }),
   },
   planCardPopular: {
-    borderColor: '#FF69B4',
-    borderWidth: 3,
+    borderColor: Colors.landing.pink,
+    borderWidth: 2,
   },
   popularBadge: {
     position: 'absolute',
     top: -12,
     right: 20,
-    backgroundColor: '#FF69B4',
-    paddingHorizontal: 15,
-    paddingVertical: 5,
-    borderRadius: 20,
+    backgroundColor: Colors.landing.pink,
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 999,
   },
   popularText: {
-    color: '#fff',
-    fontSize: 12,
-    fontWeight: 'bold',
+    color: Colors.white,
+    fontSize: 11,
+    fontWeight: '800',
+    fontFamily: Colors.landing.fontFamily,
+    letterSpacing: 0.5,
   },
   planName: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#333',
+    fontSize: 22,
+    fontWeight: '800',
+    color: Colors.landing.dark,
     marginBottom: 10,
+    fontFamily: Colors.landing.fontFamily,
   },
   priceContainer: {
     flexDirection: 'row',
@@ -164,17 +180,19 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   price: {
-    fontSize: 36,
-    fontWeight: 'bold',
-    color: '#333',
+    fontSize: 32,
+    fontWeight: '800',
+    color: Colors.landing.dark,
+    fontFamily: Colors.landing.fontFamily,
   },
   period: {
-    fontSize: 16,
-    color: '#666',
-    marginLeft: 5,
+    fontSize: 15,
+    color: Colors.landing.muted,
+    marginLeft: 4,
+    fontFamily: Colors.landing.fontFamily,
   },
   featuresList: {
-    marginBottom: 20,
+    marginBottom: 22,
   },
   featureItem: {
     flexDirection: 'row',
@@ -182,22 +200,35 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   featureIcon: {
-    fontSize: 18,
-    color: '#4CAF50',
+    fontSize: 16,
+    color: Colors.landing.purple,
     marginRight: 10,
+    fontWeight: '700',
   },
   featureText: {
     fontSize: 14,
-    color: '#666',
+    color: Colors.landing.muted,
+    fontFamily: Colors.landing.fontFamily,
+  },
+  subscribeButtonWrap: {
+    borderRadius: 999,
+    overflow: 'hidden',
+    shadowColor: Colors.landing.purple,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.2,
+    shadowRadius: 16,
+    elevation: 3,
   },
   subscribeButton: {
-    padding: 15,
-    borderRadius: 10,
+    paddingVertical: 14,
+    paddingHorizontal: 24,
     alignItems: 'center',
+    justifyContent: 'center',
   },
   subscribeText: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#fff',
+    fontSize: 15,
+    fontWeight: '700',
+    color: Colors.white,
+    fontFamily: Colors.landing.fontFamily,
   },
 });

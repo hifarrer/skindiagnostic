@@ -1,13 +1,13 @@
-import pool from '../config/database.js';
+import pool, { queryWithRetry } from '../config/database.js';
 
 export class User {
   static async findByEmail(email) {
-    const result = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
+    const result = await queryWithRetry('SELECT * FROM users WHERE email = $1', [email]);
     return result.rows[0];
   }
 
   static async findByOAuth(provider, oauthId) {
-    const result = await pool.query(
+    const result = await queryWithRetry(
       'SELECT * FROM users WHERE oauth_provider = $1 AND oauth_id = $2',
       [provider, oauthId]
     );
@@ -15,7 +15,7 @@ export class User {
   }
 
   static async findById(id) {
-    const result = await pool.query('SELECT * FROM users WHERE id = $1', [id]);
+    const result = await queryWithRetry('SELECT * FROM users WHERE id = $1', [id]);
     return result.rows[0];
   }
 
@@ -30,7 +30,7 @@ export class User {
       subscription_status = 'inactive',
     } = userData;
 
-    const result = await pool.query(
+    const result = await queryWithRetry(
       `INSERT INTO users (email, name, avatar_url, oauth_provider, oauth_id, subscription_plan_id, subscription_status)
        VALUES ($1, $2, $3, $4, $5, $6, $7)
        RETURNING *`,
@@ -57,7 +57,7 @@ export class User {
     fields.push(`updated_at = CURRENT_TIMESTAMP`);
     values.push(id);
 
-    const result = await pool.query(
+    const result = await queryWithRetry(
       `UPDATE users SET ${fields.join(', ')} WHERE id = $${paramCount} RETURNING *`,
       values
     );

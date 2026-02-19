@@ -8,7 +8,9 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   RefreshControl,
+  Platform,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Colors } from '../../constants/Colors';
 import { skinAnalysisService } from '../../services/skinAnalysisService';
 import { useAuth } from '../../contexts/AuthContext';
@@ -172,7 +174,7 @@ export default function StatisticsScreen() {
       <View style={styles.content}>
         {loading ? (
           <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color={Colors.primary.orange} />
+            <ActivityIndicator size="large" color={Colors.landing.purple} />
             <Text style={styles.loadingText}>Loading your statistics...</Text>
           </View>
         ) : history.length === 0 ? (
@@ -182,10 +184,18 @@ export default function StatisticsScreen() {
               Start by analyzing your skin on the Skin Analysis page to see your statistics here.
             </Text>
             <TouchableOpacity
-              style={styles.ctaButton}
+              style={styles.ctaButtonWrap}
               onPress={() => router.push('/(tabs)/skin-analysis')}
+              activeOpacity={0.86}
             >
-              <Text style={styles.ctaButtonText}>Go to Skin Analysis</Text>
+              <LinearGradient
+                colors={Colors.landing.gradientPurplePink}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.ctaButton}
+              >
+                <Text style={styles.ctaButtonText}>Go to Skin Analysis</Text>
+              </LinearGradient>
             </TouchableOpacity>
           </View>
         ) : (
@@ -278,71 +288,85 @@ export default function StatisticsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background.lightBlue,
+    backgroundColor: '#f7fbff',
   },
   header: {
-    paddingTop: 60,
-    paddingBottom: 20,
-    paddingHorizontal: 20,
-    backgroundColor: Colors.white,
+    paddingTop: 36,
+    paddingBottom: 22,
+    paddingHorizontal: 24,
+    backgroundColor: 'rgba(255,255,255,.92)',
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.landing.cardBorder,
   },
   headerTitle: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: Colors.text.darkBlue,
-    marginBottom: 5,
+    fontSize: 26,
+    fontWeight: '800',
+    color: Colors.landing.dark,
+    marginBottom: 4,
+    fontFamily: Colors.landing.fontFamily,
   },
   headerSubtitle: {
-    fontSize: 16,
-    color: Colors.gray.dark,
+    fontSize: 15,
+    color: Colors.landing.muted,
+    fontFamily: Colors.landing.fontFamily,
   },
   content: {
-    padding: 20,
+    padding: 24,
   },
   card: {
-    backgroundColor: Colors.white,
-    borderRadius: 12,
-    padding: 20,
+    borderRadius: 26,
+    padding: 24,
     marginBottom: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    borderWidth: 1,
+    borderColor: Colors.landing.cardBorder,
+    shadowColor: '#1f2430',
+    shadowOffset: { width: 0, height: 14 },
     shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
+    shadowRadius: 28,
+    elevation: 4,
+    ...(Platform.OS === 'web'
+      ? {
+          backgroundImage: 'linear-gradient(180deg, rgba(255,255,255,.95), rgba(247,245,255,.9))',
+          boxShadow: '0 14px 30px rgba(31,36,48,.10)',
+        } as any
+      : { backgroundColor: 'rgba(255,255,255,.92)' }),
   },
   cardTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: Colors.text.primary,
-    marginBottom: 15,
+    fontSize: 20,
+    fontWeight: '800',
+    color: Colors.landing.dark,
+    marginBottom: 12,
+    fontFamily: Colors.landing.fontFamily,
   },
   cardSubtitle: {
     fontSize: 14,
-    color: Colors.gray.dark,
-    marginBottom: 10,
+    color: Colors.landing.muted,
+    marginBottom: 6,
+    fontFamily: Colors.landing.fontFamily,
   },
   scoreValue: {
-    fontSize: 48,
-    fontWeight: 'bold',
-    color: Colors.primary.orange,
-    marginBottom: 15,
+    fontSize: 44,
+    fontWeight: '800',
+    color: Colors.landing.purple,
+    marginBottom: 14,
+    fontFamily: Colors.landing.fontFamily,
   },
   progressBarContainer: {
     height: 10,
-    backgroundColor: Colors.gray.light,
-    borderRadius: 5,
+    backgroundColor: 'rgba(123,92,255,.15)',
+    borderRadius: 999,
     overflow: 'hidden',
   },
   progressBar: {
     height: '100%',
-    backgroundColor: Colors.accent.green,
-    borderRadius: 5,
+    backgroundColor: Colors.landing.purple,
+    borderRadius: 999,
   },
   lastAnalysisText: {
     fontSize: 12,
-    color: Colors.gray.dark,
+    color: Colors.landing.muted,
     marginTop: 10,
-    fontStyle: 'italic',
+    fontFamily: Colors.landing.fontFamily,
   },
   loadingContainer: {
     alignItems: 'center',
@@ -352,38 +376,50 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 10,
     fontSize: 14,
-    color: Colors.gray.dark,
+    color: Colors.landing.muted,
+    fontFamily: Colors.landing.fontFamily,
+  },
+  ctaButtonWrap: {
+    borderRadius: 999,
+    overflow: 'hidden',
+    marginTop: 16,
+    shadowColor: Colors.landing.purple,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.2,
+    shadowRadius: 16,
+    elevation: 3,
   },
   ctaButton: {
-    backgroundColor: Colors.primary.orange,
-    borderRadius: 12,
-    padding: 15,
-    marginTop: 15,
+    borderRadius: 999,
+    paddingVertical: 14,
+    paddingHorizontal: 24,
     alignItems: 'center',
+    justifyContent: 'center',
   },
   ctaButtonText: {
     color: Colors.white,
-    fontSize: 16,
-    fontWeight: 'bold',
+    fontSize: 15,
+    fontWeight: '700',
+    fontFamily: Colors.landing.fontFamily,
   },
   historyItem: {
-    backgroundColor: Colors.background.lightBlue,
-    borderRadius: 12,
-    padding: 15,
-    marginBottom: 15,
+    borderRadius: 16,
+    padding: 12,
+    marginBottom: 10,
     borderWidth: 1,
-    borderColor: Colors.gray.light,
+    borderColor: 'rgba(123,92,255,.25)',
+    backgroundColor: 'rgba(247,245,255,.6)',
   },
   historyItemHeader: {
     flexDirection: 'row',
-    marginBottom: 10,
+    marginBottom: 8,
   },
   historyItemImageContainer: {
-    width: 60,
-    height: 60,
-    borderRadius: 8,
+    width: 52,
+    height: 52,
+    borderRadius: 10,
     overflow: 'hidden',
-    marginRight: 15,
+    marginRight: 12,
   },
   historyItemImage: {
     width: '100%',
@@ -405,10 +441,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   historyItemDate: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '600',
-    color: Colors.text.primary,
-    marginBottom: 5,
+    color: Colors.landing.dark,
+    marginBottom: 4,
+    fontFamily: Colors.landing.fontFamily,
   },
   historyItemScoreContainer: {
     flexDirection: 'row',
@@ -416,46 +453,50 @@ const styles = StyleSheet.create({
   },
   historyItemScoreLabel: {
     fontSize: 12,
-    color: Colors.gray.dark,
+    color: Colors.landing.muted,
     marginRight: 5,
+    fontFamily: Colors.landing.fontFamily,
   },
   historyItemScoreValue: {
     fontSize: 16,
-    fontWeight: 'bold',
-    color: Colors.primary.orange,
+    fontWeight: '700',
+    color: Colors.landing.purple,
+    fontFamily: Colors.landing.fontFamily,
   },
   historyItemScores: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
-    marginTop: 10,
+    gap: 6,
+    marginTop: 8,
   },
   historyScoreChip: {
     flexDirection: 'row',
-    backgroundColor: Colors.white,
-    paddingVertical: 6,
-    paddingHorizontal: 10,
-    borderRadius: 16,
+    backgroundColor: 'rgba(255,255,255,.95)',
+    paddingVertical: 5,
+    paddingHorizontal: 8,
+    borderRadius: 10,
     borderWidth: 1,
-    borderColor: Colors.gray.light,
-    marginRight: 6,
-    marginBottom: 6,
+    borderColor: 'rgba(123,92,255,.18)',
+    marginRight: 4,
+    marginBottom: 4,
   },
   historyScoreChipLabel: {
     fontSize: 11,
-    color: Colors.gray.dark,
+    color: Colors.landing.muted,
     marginRight: 4,
+    fontFamily: Colors.landing.fontFamily,
   },
   historyScoreChipValue: {
     fontSize: 11,
-    fontWeight: 'bold',
-    color: Colors.primary.orange,
+    fontWeight: '700',
+    color: Colors.landing.purple,
+    fontFamily: Colors.landing.fontFamily,
   },
   moreScoresText: {
     fontSize: 11,
-    color: Colors.gray.dark,
-    fontStyle: 'italic',
+    color: Colors.landing.muted,
     alignSelf: 'center',
     marginLeft: 8,
+    fontFamily: Colors.landing.fontFamily,
   },
 });
