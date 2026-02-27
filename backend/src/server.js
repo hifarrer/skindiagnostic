@@ -1,7 +1,5 @@
 import express from 'express';
 import cors from 'cors';
-import path from 'path';
-import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
 import passport from './config/passport.js';
 import { errorHandler } from './middleware/errorHandler.js';
@@ -16,9 +14,7 @@ import subscriptionRoutes from './routes/subscriptionRoutes.js';
 import uploadRoutes from './routes/uploadRoutes.js';
 import dermatologistRoutes from './routes/dermatologistRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+import adminPageRoute from './routes/adminPageRoute.js';
 
 dotenv.config();
 
@@ -50,8 +46,8 @@ app.use('/api/subscriptions', subscriptionRoutes);
 app.use('/api/dermatologists', dermatologistRoutes);
 app.use('/api/admin', adminRoutes);
 
-// Serve admin dashboard static files
-app.use('/admin', express.static(path.join(__dirname, '..', 'public', 'admin')));
+// Serve admin dashboard (inline HTML, works in Vercel serverless)
+app.use('/admin', adminPageRoute);
 
 // Error handling middleware
 app.use(errorHandler);
