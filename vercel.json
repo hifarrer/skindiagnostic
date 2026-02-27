@@ -5,6 +5,14 @@
   "framework": null,
   "rewrites": [
     {
+      "source": "/admin",
+      "destination": "https://skindiagnosticbackend.vercel.app/admin"
+    },
+    {
+      "source": "/api/admin/:path*",
+      "destination": "https://skindiagnosticbackend.vercel.app/api/admin/:path*"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }
