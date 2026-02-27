@@ -1,4 +1,5 @@
 import pool from './database.js';
+import bcrypt from 'bcryptjs';
 
 const createTables = async () => {
   const client = await pool.connect();
@@ -90,6 +91,17 @@ const createTables = async () => {
       )
     `);
 
+    // Admin users table
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS admin_users (
+        id SERIAL PRIMARY KEY,
+        username VARCHAR(255) UNIQUE NOT NULL,
+        password_hash VARCHAR(255) NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
     // Add foreign key for subscription_plan_id
     await client.query(`
       DO $$ 
@@ -114,6 +126,18 @@ const createTables = async () => {
         ('Premium', 'Everything in Pro plus priority support', 49.99, '["skin_analysis", "makeup_vto", "look_vto", "unlimited_analyses", "priority_support", "api_access"]', true)
       ON CONFLICT DO NOTHING
     `);
+
+    // Seed default admin user (admin / admin123)
+    const existingAdmin = await client.query(
+      `SELECT id FROM admin_users WHERE username = 'admin'`
+    );
+    if (existingAdmin.rows.length === 0) {
+      const hash = await bcrypt.hash('admin123', 10);
+      await client.query(
+        `INSERT INTO admin_users (username, password_hash) VALUES ('admin', $1)`,
+        [hash]
+      );
+    }
 
     await client.query('COMMIT');
     console.log('Database tables created successfully');

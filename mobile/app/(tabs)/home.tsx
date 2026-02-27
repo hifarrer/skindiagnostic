@@ -78,6 +78,13 @@ export default function HomeScreen() {
                 </View>
               </TouchableOpacity>
             </View>
+            {Platform.OS !== 'web' && (
+              <View style={styles.disclaimer}>
+                <Text style={styles.disclaimerText}>
+                  This app is not a replacement for a dermatologist. If you have skin concerns, please consult a doctor.
+                </Text>
+              </View>
+            )}
           </View>
         </View>
       </ScrollView>
@@ -178,5 +185,18 @@ const styles = StyleSheet.create({
   },
   actionLabelSecondary: {
     color: Colors.landing.dark,
+  },
+  disclaimer: {
+    marginTop: 20,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255,255,255,0.4)',
+  },
+  disclaimerText: {
+    fontSize: 12,
+    color: Colors.landing.muted,
+    textAlign: 'center',
+    lineHeight: 18,
+    fontFamily: Colors.landing.fontFamily,
   },
 });

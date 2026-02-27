@@ -1,6 +1,6 @@
 import { Tabs, useRouter } from 'expo-router';
 import { Colors } from '../../constants/Colors';
-import { Text, View, Platform } from 'react-native';
+import { Text, Platform } from 'react-native';
 import { useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useIsDesktop } from '../../hooks/useIsDesktop';
@@ -69,26 +69,7 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="data"
         options={{
-          title: 'Data',
-          tabBarIcon: ({ focused }) => (
-            <View style={{
-              width: 50,
-              height: 50,
-              borderRadius: 25,
-              backgroundColor: '#7B5CFF', // Landing page purple
-              justifyContent: 'center',
-              alignItems: 'center',
-              marginTop: -10,
-              shadowColor: '#7B5CFF',
-              shadowOffset: { width: 0, height: 4 },
-              shadowOpacity: 0.3,
-              shadowRadius: 8,
-              elevation: 5,
-            }}>
-              <Text style={{ fontSize: 28, color: Colors.white, fontWeight: 'bold' }}>+</Text>
-            </View>
-          ),
-          tabBarLabel: '',
+          href: null,
         }}
       />
       <Tabs.Screen
