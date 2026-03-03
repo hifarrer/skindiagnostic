@@ -22,6 +22,7 @@ router.delete('/users/:id', ctrl.deleteUser);
 router.get('/plans', ctrl.getPlans);
 router.post('/plans', ctrl.createPlan);
 router.put('/plans/:id', ctrl.updatePlan);
+router.delete('/plans/:id/permanent', ctrl.deletePlanPermanent);
 router.delete('/plans/:id', ctrl.deletePlan);
 
 // Statistics

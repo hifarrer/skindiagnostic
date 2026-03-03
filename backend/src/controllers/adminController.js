@@ -224,6 +224,23 @@ export const deletePlan = async (req, res) => {
   }
 };
 
+/** Permanently delete a plan. Users on this plan are set to subscription_plan_id NULL. */
+export const deletePlanPermanent = async (req, res) => {
+  try {
+    const planId = req.params.id;
+    const plan = await queryWithRetry('SELECT id FROM plans WHERE id = $1', [planId]);
+    if (!plan.rows[0]) {
+      return res.status(404).json({ error: 'Plan not found' });
+    }
+    await queryWithRetry('UPDATE users SET subscription_plan_id = NULL WHERE subscription_plan_id = $1', [planId]);
+    await queryWithRetry('DELETE FROM plans WHERE id = $1', [planId]);
+    res.json({ message: 'Plan deleted permanently' });
+  } catch (error) {
+    console.error('Delete plan permanent error:', error);
+    res.status(500).json({ error: 'Failed to delete plan' });
+  }
+};
+
 // ── Statistics ──────────────────────────────────────────────────────────
 
 export const getOverview = async (_req, res) => {

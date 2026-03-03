@@ -117,14 +117,45 @@ const createTables = async () => {
       END $$;
     `);
 
-    // Insert default plans
+    // Deduplicate plans: keep one row per (name, price) with the smallest id; point users to it; remove duplicates
+    await client.query(`
+      WITH kept AS (
+        SELECT min(id) AS kept_id, name, price FROM plans GROUP BY name, price
+      )
+      UPDATE users u
+      SET subscription_plan_id = k.kept_id
+      FROM plans p
+      JOIN kept k ON k.name = p.name AND k.price = p.price
+      WHERE p.id = u.subscription_plan_id AND u.subscription_plan_id <> k.kept_id
+    `);
+    await client.query(`
+      WITH kept AS (
+        SELECT min(id) AS id FROM plans GROUP BY name, price
+      )
+      DELETE FROM plans WHERE id NOT IN (SELECT id FROM kept)
+    `);
+
+    // Add unique constraint so default plans are not re-inserted on future migrations
+    await client.query(`
+      DO $$
+      BEGIN
+        IF NOT EXISTS (
+          SELECT 1 FROM information_schema.table_constraints
+          WHERE table_name = 'plans' AND constraint_name = 'plans_name_price_key'
+        ) THEN
+          ALTER TABLE plans ADD CONSTRAINT plans_name_price_key UNIQUE (name, price);
+        END IF;
+      END $$
+    `);
+
+    // Insert default plans (only if not already present)
     await client.query(`
       INSERT INTO plans (name, description, price, features, is_active)
       VALUES 
         ('Free', 'Basic features', 0.00, '["skin_analysis_limited"]', true),
         ('Pro', 'Full access to all features', 29.99, '["skin_analysis", "makeup_vto", "look_vto", "unlimited_analyses"]', true),
         ('Premium', 'Everything in Pro plus priority support', 49.99, '["skin_analysis", "makeup_vto", "look_vto", "unlimited_analyses", "priority_support", "api_access"]', true)
-      ON CONFLICT DO NOTHING
+      ON CONFLICT (name, price) DO NOTHING
     `);
 
     // Seed default admin user (admin / admin123)

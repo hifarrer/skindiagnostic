@@ -454,6 +454,7 @@
             <div class="plan-actions">
               <button class="btn-secondary btn-sm" onclick="window.__editPlan(${p.id})">Edit</button>
               ${p.is_active ? `<button class="btn-danger btn-sm" onclick="window.__deactivatePlan(${p.id})">Deactivate</button>` : ''}
+              <button class="btn-danger btn-sm" onclick="window.__deletePlanPermanent(${p.id}, '${escHtml(p.name).replace(/'/g, "\\'")}')">Delete</button>
             </div>
           </div>
         `;
@@ -551,6 +552,17 @@
     try {
       await api(`/plans/${id}`, { method: 'DELETE' });
       toast('Plan deactivated', 'success');
+      renderPlans();
+    } catch (err) {
+      toast(err.message, 'error');
+    }
+  };
+
+  window.__deletePlanPermanent = async (id, name) => {
+    if (!confirm(`Permanently delete plan "${name}"? Users on this plan will have their plan cleared. This cannot be undone.`)) return;
+    try {
+      await api(`/plans/${id}/permanent`, { method: 'DELETE' });
+      toast('Plan deleted', 'success');
       renderPlans();
     } catch (err) {
       toast(err.message, 'error');
