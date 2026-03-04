@@ -1,6 +1,7 @@
 import React from 'react';
 import { Stack } from 'expo-router';
 import { AuthProvider } from '../contexts/AuthContext';
+import { SubscriptionProvider } from '../contexts/SubscriptionContext';
 import { StatusBar } from 'expo-status-bar';
 import { View, Text, StyleSheet, Platform } from 'react-native';
 import { Colors } from '../constants/Colors';
@@ -67,14 +68,16 @@ export default function RootLayout() {
   return (
     <ErrorBoundary>
       <AuthProvider>
-        <StatusBar style="light" />
-        {shouldWrap ? (
-          <DesktopWrapper>
+        <SubscriptionProvider>
+          <StatusBar style="light" />
+          {shouldWrap ? (
+            <DesktopWrapper>
+              <AppContent />
+            </DesktopWrapper>
+          ) : (
             <AppContent />
-          </DesktopWrapper>
-        ) : (
-          <AppContent />
-        )}
+          )}
+        </SubscriptionProvider>
       </AuthProvider>
     </ErrorBoundary>
   );
