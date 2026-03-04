@@ -389,6 +389,129 @@ body {
 
 .form-success { color: var(--green); font-size: 13px; min-height: 20px; margin-bottom: 8px; }
 
+/* ── User Detail ─────────────────────────────────────────────────── */
+.user-link {
+  color: var(--purple); font-weight: 600; text-decoration: none;
+  transition: color var(--transition);
+}
+.user-link:hover { color: var(--pink); text-decoration: underline; }
+
+.user-detail-header { margin-bottom: 20px; }
+.back-link {
+  display: inline-flex; align-items: center; gap: 6px;
+  color: var(--text-muted); font-size: 13px; font-weight: 600;
+  text-decoration: none; transition: color var(--transition);
+}
+.back-link:hover { color: var(--purple); }
+
+.user-profile-card {
+  display: flex; align-items: center; gap: 20px;
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius);
+  padding: 24px 28px;
+  box-shadow: var(--shadow);
+  margin-bottom: 24px;
+}
+.user-avatar-large {
+  width: 56px; height: 56px; border-radius: 50%;
+  background: var(--gradient); color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px; font-weight: 800; flex-shrink: 0;
+}
+.user-profile-info h2 { font-size: 20px; font-weight: 700; margin-bottom: 2px; }
+.user-email { font-size: 13px; color: var(--text-muted); margin-bottom: 10px; }
+.user-meta-tags { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.meta-tag {
+  font-size: 12px; color: var(--text-muted); font-weight: 500;
+  background: #f0f0f5; padding: 3px 10px; border-radius: 12px;
+}
+
+.detail-tabs {
+  display: flex; gap: 4px;
+  border-bottom: 2px solid var(--card-border);
+  margin-bottom: 20px;
+}
+.detail-tab {
+  padding: 10px 20px; border: none; background: none;
+  font-family: var(--font); font-size: 14px; font-weight: 600;
+  color: var(--text-muted); cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  transition: color var(--transition), border-color var(--transition);
+}
+.detail-tab:hover { color: var(--text); }
+.detail-tab.active { color: var(--purple); border-bottom-color: var(--purple); }
+
+.task-thumb {
+  width: 48px; height: 48px; object-fit: cover;
+  border-radius: 6px; border: 1px solid var(--card-border);
+  transition: transform var(--transition);
+}
+.thumb-link:hover .task-thumb { transform: scale(1.1); }
+.task-id-code {
+  font-size: 11px; background: #f0f0f5; padding: 2px 8px;
+  border-radius: 4px; color: var(--text-muted); word-break: break-all;
+  white-space: normal;
+}
+
+.analysis-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 20px;
+}
+.analysis-card {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius);
+  padding: 20px;
+  box-shadow: var(--shadow);
+}
+.analysis-header {
+  display: flex; gap: 14px; align-items: flex-start;
+  margin-bottom: 16px; padding-bottom: 14px;
+  border-bottom: 1px solid #f3f4f6;
+}
+.analysis-thumb {
+  width: 72px; height: 72px; object-fit: cover;
+  border-radius: var(--radius-sm); border: 1px solid var(--card-border);
+  flex-shrink: 0;
+}
+.analysis-meta { flex: 1; }
+.analysis-date { font-size: 14px; font-weight: 600; color: var(--text); }
+.analysis-task-id { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+.analysis-task-id code {
+  background: #f0f0f5; padding: 1px 6px; border-radius: 4px;
+}
+
+.score-grid { display: flex; flex-direction: column; gap: 10px; }
+.score-item {}
+.score-header {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 4px;
+}
+.score-label { font-size: 12px; font-weight: 600; color: var(--text-muted); text-transform: capitalize; }
+.score-value { font-size: 13px; font-weight: 700; color: var(--text); }
+.score-bar {
+  width: 100%; height: 6px; background: #f0f0f5;
+  border-radius: 3px; overflow: hidden;
+}
+.score-bar-fill {
+  height: 100%; border-radius: 3px;
+  background: var(--gradient);
+  transition: width .4s ease;
+}
+
+.empty-msg {
+  text-align: center; color: var(--text-muted);
+  padding: 30px; font-size: 14px;
+}
+.text-muted { color: var(--text-muted); }
+
+.badge-pending { background: rgba(255,138,76,.12); color: #c2410c; }
+.badge-processing { background: rgba(90,215,255,.12); color: #0891b2; }
+.badge-failed { background: rgba(248,113,113,.12); color: #dc2626; }
+
 /* ── Modal ────────────────────────────────────────────────────────── */
 .modal-backdrop {
   position: fixed; inset: 0; z-index: 900;

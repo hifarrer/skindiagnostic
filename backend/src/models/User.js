@@ -74,5 +74,41 @@ export class User {
     }
     return this.update(userId, updates);
   }
+
+  static async updateSubscriptionFull(userId, {
+    planId,
+    status,
+    source,
+    expiresAt,
+    cancelAtPeriodEnd,
+    stripeCustomerId,
+    revenuecatAppUserId,
+  }) {
+    const updates = {};
+    if (planId !== undefined) updates.subscription_plan_id = planId;
+    if (status !== undefined) updates.subscription_status = status;
+    if (source !== undefined) updates.subscription_source = source;
+    if (expiresAt !== undefined) updates.subscription_expires_at = expiresAt;
+    if (cancelAtPeriodEnd !== undefined) updates.subscription_cancel_at_period_end = cancelAtPeriodEnd;
+    if (stripeCustomerId !== undefined) updates.stripe_customer_id = stripeCustomerId;
+    if (revenuecatAppUserId !== undefined) updates.revenuecat_app_user_id = revenuecatAppUserId;
+    return this.update(userId, updates);
+  }
+
+  static async findByStripeCustomerId(stripeCustomerId) {
+    const result = await queryWithRetry(
+      'SELECT * FROM users WHERE stripe_customer_id = $1',
+      [stripeCustomerId]
+    );
+    return result.rows[0];
+  }
+
+  static async findByRevenueCatId(revenuecatAppUserId) {
+    const result = await queryWithRetry(
+      'SELECT * FROM users WHERE revenuecat_app_user_id = $1',
+      [revenuecatAppUserId]
+    );
+    return result.rows[0];
+  }
 }
 

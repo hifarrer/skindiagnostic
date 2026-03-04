@@ -26,7 +26,7 @@ const createTables = async () => {
       )
     `);
 
-    // Add age column if it doesn't exist (for existing databases)
+    // Add columns if they don't exist (for existing databases)
     await client.query(`
       DO $$ 
       BEGIN
@@ -35,6 +35,34 @@ const createTables = async () => {
           WHERE table_name = 'users' AND column_name = 'age'
         ) THEN
           ALTER TABLE users ADD COLUMN age INTEGER;
+        END IF;
+
+        IF NOT EXISTS (
+          SELECT 1 FROM information_schema.columns 
+          WHERE table_name = 'users' AND column_name = 'revenuecat_app_user_id'
+        ) THEN
+          ALTER TABLE users ADD COLUMN revenuecat_app_user_id VARCHAR(255);
+        END IF;
+
+        IF NOT EXISTS (
+          SELECT 1 FROM information_schema.columns 
+          WHERE table_name = 'users' AND column_name = 'subscription_source'
+        ) THEN
+          ALTER TABLE users ADD COLUMN subscription_source VARCHAR(20);
+        END IF;
+
+        IF NOT EXISTS (
+          SELECT 1 FROM information_schema.columns 
+          WHERE table_name = 'users' AND column_name = 'subscription_expires_at'
+        ) THEN
+          ALTER TABLE users ADD COLUMN subscription_expires_at TIMESTAMP;
+        END IF;
+
+        IF NOT EXISTS (
+          SELECT 1 FROM information_schema.columns 
+          WHERE table_name = 'users' AND column_name = 'subscription_cancel_at_period_end'
+        ) THEN
+          ALTER TABLE users ADD COLUMN subscription_cancel_at_period_end BOOLEAN DEFAULT false;
         END IF;
       END $$;
     `);
@@ -48,10 +76,48 @@ const createTables = async () => {
         price DECIMAL(10, 2) NOT NULL,
         features JSONB DEFAULT '[]',
         stripe_price_id VARCHAR(255),
+        apple_product_id VARCHAR(255),
+        google_product_id VARCHAR(255),
+        trial_days INTEGER DEFAULT 0,
+        billing_period VARCHAR(20) DEFAULT 'monthly',
         is_active BOOLEAN DEFAULT true,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
+    `);
+
+    // Add plan columns if they don't exist (for existing databases)
+    await client.query(`
+      DO $$
+      BEGIN
+        IF NOT EXISTS (
+          SELECT 1 FROM information_schema.columns
+          WHERE table_name = 'plans' AND column_name = 'apple_product_id'
+        ) THEN
+          ALTER TABLE plans ADD COLUMN apple_product_id VARCHAR(255);
+        END IF;
+
+        IF NOT EXISTS (
+          SELECT 1 FROM information_schema.columns
+          WHERE table_name = 'plans' AND column_name = 'google_product_id'
+        ) THEN
+          ALTER TABLE plans ADD COLUMN google_product_id VARCHAR(255);
+        END IF;
+
+        IF NOT EXISTS (
+          SELECT 1 FROM information_schema.columns
+          WHERE table_name = 'plans' AND column_name = 'trial_days'
+        ) THEN
+          ALTER TABLE plans ADD COLUMN trial_days INTEGER DEFAULT 0;
+        END IF;
+
+        IF NOT EXISTS (
+          SELECT 1 FROM information_schema.columns
+          WHERE table_name = 'plans' AND column_name = 'billing_period'
+        ) THEN
+          ALTER TABLE plans ADD COLUMN billing_period VARCHAR(20) DEFAULT 'monthly';
+        END IF;
+      END $$;
     `);
 
     // Site settings table

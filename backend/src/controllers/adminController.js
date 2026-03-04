@@ -142,6 +142,64 @@ export const deleteUser = async (req, res) => {
   }
 };
 
+// ── User Activity (photos / analysis) ────────────────────────────────────
+
+export const getUserTasks = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { page = 1, limit = 20, task_type } = req.query;
+    const offset = (page - 1) * limit;
+
+    const params = [id];
+    let where = 'WHERE t.user_id = $1';
+    if (task_type) {
+      where += ` AND t.task_type = $2`;
+      params.push(task_type);
+    }
+
+    const countResult = await queryWithRetry(
+      `SELECT COUNT(*) FROM tasks t ${where}`,
+      params
+    );
+    const total = parseInt(countResult.rows[0].count, 10);
+
+    const dataParams = [...params, parseInt(limit, 10), parseInt(offset, 10)];
+    const result = await queryWithRetry(
+      `SELECT t.*
+       FROM tasks t
+       ${where}
+       ORDER BY t.created_at DESC
+       LIMIT $${dataParams.length - 1} OFFSET $${dataParams.length}`,
+      dataParams
+    );
+
+    res.json({ tasks: result.rows, total, page: parseInt(page, 10), limit: parseInt(limit, 10) });
+  } catch (error) {
+    console.error('Get user tasks error:', error);
+    res.status(500).json({ error: 'Failed to fetch user tasks' });
+  }
+};
+
+export const getUserAnalyses = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const result = await queryWithRetry(
+      `SELECT sar.*, t.task_type, t.status as task_status, t.result_url, t.metadata as task_metadata
+       FROM skin_analysis_results sar
+       JOIN tasks t ON sar.task_id = t.id
+       WHERE sar.user_id = $1
+       ORDER BY sar.created_at DESC`,
+      [id]
+    );
+
+    res.json({ analyses: result.rows });
+  } catch (error) {
+    console.error('Get user analyses error:', error);
+    res.status(500).json({ error: 'Failed to fetch user analyses' });
+  }
+};
+
 // ── Plans ───────────────────────────────────────────────────────────────
 
 export const getPlans = async (_req, res) => {
@@ -156,15 +214,15 @@ export const getPlans = async (_req, res) => {
 
 export const createPlan = async (req, res) => {
   try {
-    const { name, description, price, features, stripe_price_id, is_active = true } = req.body;
+    const { name, description, price, features, stripe_price_id, apple_product_id, google_product_id, trial_days, billing_period, is_active = true } = req.body;
     if (!name || price === undefined) {
       return res.status(400).json({ error: 'Name and price are required' });
     }
 
     const result = await queryWithRetry(
-      `INSERT INTO plans (name, description, price, features, stripe_price_id, is_active)
-       VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
-      [name, description || '', price, JSON.stringify(features || []), stripe_price_id || null, is_active]
+      `INSERT INTO plans (name, description, price, features, stripe_price_id, apple_product_id, google_product_id, trial_days, billing_period, is_active)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *`,
+      [name, description || '', price, JSON.stringify(features || []), stripe_price_id || null, apple_product_id || null, google_product_id || null, parseInt(trial_days, 10) || 0, billing_period || 'monthly', is_active]
     );
     res.status(201).json({ plan: result.rows[0] });
   } catch (error) {
@@ -175,7 +233,7 @@ export const createPlan = async (req, res) => {
 
 export const updatePlan = async (req, res) => {
   try {
-    const { name, description, price, features, stripe_price_id, is_active } = req.body;
+    const { name, description, price, features, stripe_price_id, apple_product_id, google_product_id, trial_days, billing_period, is_active } = req.body;
     const fields = [];
     const values = [];
     let idx = 1;
@@ -185,6 +243,10 @@ export const updatePlan = async (req, res) => {
     if (price !== undefined) { fields.push(`price = $${idx++}`); values.push(price); }
     if (features !== undefined) { fields.push(`features = $${idx++}`); values.push(JSON.stringify(features)); }
     if (stripe_price_id !== undefined) { fields.push(`stripe_price_id = $${idx++}`); values.push(stripe_price_id); }
+    if (apple_product_id !== undefined) { fields.push(`apple_product_id = $${idx++}`); values.push(apple_product_id); }
+    if (google_product_id !== undefined) { fields.push(`google_product_id = $${idx++}`); values.push(google_product_id); }
+    if (trial_days !== undefined) { fields.push(`trial_days = $${idx++}`); values.push(parseInt(trial_days, 10) || 0); }
+    if (billing_period !== undefined) { fields.push(`billing_period = $${idx++}`); values.push(billing_period); }
     if (is_active !== undefined) { fields.push(`is_active = $${idx++}`); values.push(is_active); }
 
     if (fields.length === 0) {

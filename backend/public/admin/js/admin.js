@@ -121,6 +121,20 @@
 
   function route() {
     const hash = location.hash.replace('#', '') || 'dashboard';
+
+    const userDetailMatch = hash.match(/^user\/(\d+)$/);
+    if (userDetailMatch) {
+      currentView = 'users';
+      pageTitle.textContent = 'User Detail';
+      document.querySelectorAll('.nav-item[data-view]').forEach((el) => {
+        el.classList.toggle('active', el.dataset.view === 'users');
+      });
+      sidebar.classList.remove('open');
+      destroyCharts();
+      renderUserDetail(userDetailMatch[1]);
+      return;
+    }
+
     if (!views[hash]) { location.hash = '#dashboard'; return; }
     currentView = hash;
     pageTitle.textContent = titles[hash];
@@ -327,7 +341,7 @@
       let rows = data.users.map((u) => `
         <tr>
           <td>${u.id}</td>
-          <td>${escHtml(u.name) || '—'}</td>
+          <td><a href="#user/${u.id}" class="user-link">${escHtml(u.name) || '—'}</a></td>
           <td>${escHtml(u.email)}</td>
           <td>${escHtml(u.plan_name) || 'None'}</td>
           <td><span class="badge ${u.subscription_status === 'active' ? 'badge-active' : 'badge-inactive'}">${u.subscription_status}</span></td>
@@ -435,6 +449,128 @@
   };
 
   // ================================================================
+  //  USER DETAIL VIEW
+  // ================================================================
+  async function renderUserDetail(userId) {
+    viewContainer.innerHTML = '<div class="loading-state"><div class="spinner spinner-dark"></div> Loading...</div>';
+    try {
+      const [{ user }, { tasks }, { analyses }] = await Promise.all([
+        api(`/users/${userId}`),
+        api(`/users/${userId}/tasks?limit=100`),
+        api(`/users/${userId}/analyses`),
+      ]);
+
+      const taskTypeLabel = (t) => t.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+      const statusBadge = (s) => {
+        const colors = { completed: 'badge-active', pending: 'badge-pending', processing: 'badge-processing', failed: 'badge-failed' };
+        return `<span class="badge ${colors[s] || 'badge-inactive'}">${s}</span>`;
+      };
+
+      const taskRows = tasks.length ? tasks.map((t) => {
+        const meta = typeof t.metadata === 'string' ? JSON.parse(t.metadata) : (t.metadata || {});
+        let preview = '';
+        if (t.result_url) {
+          preview = `<a href="${escHtml(t.result_url)}" target="_blank" class="thumb-link"><img src="${escHtml(t.result_url)}" class="task-thumb" alt="result" /></a>`;
+        } else if (meta.resultImageUrl) {
+          preview = `<a href="${escHtml(meta.resultImageUrl)}" target="_blank" class="thumb-link"><img src="${escHtml(meta.resultImageUrl)}" class="task-thumb" alt="result" /></a>`;
+        }
+        return `
+          <tr>
+            <td>${taskTypeLabel(t.task_type)}</td>
+            <td>${statusBadge(t.status)}</td>
+            <td>${preview || '<span class="text-muted">—</span>'}</td>
+            <td><code class="task-id-code">${escHtml(t.task_id)}</code></td>
+            <td>${fmtDate(t.created_at)}</td>
+          </tr>`;
+      }).join('') : '<tr><td colspan="5" class="empty-msg">No tasks found</td></tr>';
+
+      const analysisCards = analyses.length ? analyses.map((a) => {
+        const scores = typeof a.scores === 'string' ? JSON.parse(a.scores) : (a.scores || {});
+        const scoreEntries = Object.entries(scores);
+        const scoreItems = scoreEntries.map(([key, val]) => {
+          const label = key.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+          const numVal = typeof val === 'object' ? (val.value ?? val.score ?? '—') : val;
+          const pct = typeof numVal === 'number' ? Math.round(numVal) : null;
+          return `
+            <div class="score-item">
+              <div class="score-header">
+                <span class="score-label">${escHtml(label)}</span>
+                <span class="score-value">${pct !== null ? pct : escHtml(String(numVal))}</span>
+              </div>
+              ${pct !== null ? `<div class="score-bar"><div class="score-bar-fill" style="width:${Math.min(pct, 100)}%"></div></div>` : ''}
+            </div>`;
+        }).join('');
+
+        return `
+          <div class="analysis-card">
+            <div class="analysis-header">
+              ${a.image_url ? `<a href="${escHtml(a.image_url)}" target="_blank"><img src="${escHtml(a.image_url)}" class="analysis-thumb" alt="photo" /></a>` : ''}
+              <div class="analysis-meta">
+                <div class="analysis-date">${fmtDate(a.created_at)}</div>
+                <div class="analysis-task-id">Task: <code>${escHtml(a.task_id)}</code></div>
+              </div>
+            </div>
+            ${scoreItems ? `<div class="score-grid">${scoreItems}</div>` : '<p class="text-muted">No scores available</p>'}
+          </div>`;
+      }).join('') : '<div class="empty-msg">No skin analysis results found</div>';
+
+      viewContainer.innerHTML = `
+        <div class="user-detail-header">
+          <a href="#users" class="back-link">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+            Back to Users
+          </a>
+        </div>
+
+        <div class="user-profile-card">
+          <div class="user-avatar-large">${escHtml((user.name || user.email || '?')[0].toUpperCase())}</div>
+          <div class="user-profile-info">
+            <h2>${escHtml(user.name) || 'Unnamed User'}</h2>
+            <p class="user-email">${escHtml(user.email)}</p>
+            <div class="user-meta-tags">
+              <span class="badge ${user.subscription_status === 'active' ? 'badge-active' : 'badge-inactive'}">${user.subscription_status}</span>
+              <span class="meta-tag">Plan: ${escHtml(user.plan_name) || 'None'}</span>
+              <span class="meta-tag">Joined: ${fmtDate(user.created_at)}</span>
+              <span class="meta-tag">Tasks: ${tasks.length}</span>
+              <span class="meta-tag">Analyses: ${analyses.length}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="detail-tabs">
+          <button class="detail-tab active" data-tab="tasks">Tasks (${tasks.length})</button>
+          <button class="detail-tab" data-tab="analyses">Skin Analyses (${analyses.length})</button>
+        </div>
+
+        <div id="tab-tasks" class="detail-tab-content">
+          <div class="data-table-wrap">
+            <table class="data-table">
+              <thead><tr><th>Type</th><th>Status</th><th>Preview</th><th>Task ID</th><th>Date</th></tr></thead>
+              <tbody>${taskRows}</tbody>
+            </table>
+          </div>
+        </div>
+
+        <div id="tab-analyses" class="detail-tab-content" style="display:none">
+          <div class="analysis-grid">${analysisCards}</div>
+        </div>
+      `;
+
+      document.querySelectorAll('.detail-tab').forEach((tab) => {
+        tab.addEventListener('click', () => {
+          document.querySelectorAll('.detail-tab').forEach((t) => t.classList.remove('active'));
+          tab.classList.add('active');
+          document.querySelectorAll('.detail-tab-content').forEach((c) => c.style.display = 'none');
+          document.getElementById(`tab-${tab.dataset.tab}`).style.display = '';
+        });
+      });
+
+    } catch (err) {
+      viewContainer.innerHTML = `<div class="loading-state" style="color:var(--red)">${escHtml(err.message)}</div>`;
+    }
+  }
+
+  // ================================================================
   //  PLANS VIEW
   // ================================================================
   async function renderPlans() {
@@ -495,7 +631,19 @@
         </div>
         <div class="form-group">
           <label>Stripe Price ID (optional)</label>
-          <input name="stripe_price_id" value="${escHtml(plan?.stripe_price_id ?? '')}" />
+          <input name="stripe_price_id" value="${escHtml(plan?.stripe_price_id ?? '')}" placeholder="price_..." />
+        </div>
+        <div class="form-group">
+          <label>Apple Product ID (optional)</label>
+          <input name="apple_product_id" value="${escHtml(plan?.apple_product_id ?? '')}" placeholder="com.aimakeup.premium.monthly" />
+        </div>
+        <div class="form-group">
+          <label>Google Product ID (optional)</label>
+          <input name="google_product_id" value="${escHtml(plan?.google_product_id ?? '')}" placeholder="premium_monthly" />
+        </div>
+        <div class="form-group">
+          <label>Free Trial Days</label>
+          <input name="trial_days" type="number" min="0" value="${plan?.trial_days ?? 0}" />
         </div>
         <div class="form-group">
           <label>Active</label>
@@ -518,6 +666,9 @@
         description: fd.get('description'),
         features: fd.get('features').split(',').map((s) => s.trim()).filter(Boolean),
         stripe_price_id: fd.get('stripe_price_id') || null,
+        apple_product_id: fd.get('apple_product_id') || null,
+        google_product_id: fd.get('google_product_id') || null,
+        trial_days: parseInt(fd.get('trial_days'), 10) || 0,
         is_active: fd.get('is_active') === 'true',
       };
       try {

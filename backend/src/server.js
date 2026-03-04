@@ -11,6 +11,7 @@ import makeupVTORoutes from './routes/makeupVTORoutes.js';
 import lookVTORoutes from './routes/lookVTORoutes.js';
 import planRoutes from './routes/planRoutes.js';
 import subscriptionRoutes from './routes/subscriptionRoutes.js';
+import webhookRoutes from './routes/webhookRoutes.js';
 import uploadRoutes from './routes/uploadRoutes.js';
 import dermatologistRoutes from './routes/dermatologistRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
@@ -26,6 +27,11 @@ app.use(cors({
   origin: process.env.FRONTEND_URL || 'http://localhost:8081',
   credentials: true,
 }));
+
+// Webhook routes BEFORE express.json() — Stripe requires raw body for
+// signature verification; each webhook route applies its own body parser.
+app.use('/api/webhooks', webhookRoutes);
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(passport.initialize());

@@ -15,6 +15,8 @@ router.get('/me', ctrl.getMe);
 // Users
 router.get('/users', ctrl.getUsers);
 router.get('/users/:id', ctrl.getUser);
+router.get('/users/:id/tasks', ctrl.getUserTasks);
+router.get('/users/:id/analyses', ctrl.getUserAnalyses);
 router.put('/users/:id', ctrl.updateUser);
 router.delete('/users/:id', ctrl.deleteUser);
 

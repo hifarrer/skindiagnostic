@@ -18,5 +18,20 @@ export class Plan {
     const result = await pool.query('SELECT * FROM plans WHERE stripe_price_id = $1', [stripePriceId]);
     return result.rows[0];
   }
+
+  static async findByAppleProductId(appleProductId) {
+    const result = await pool.query('SELECT * FROM plans WHERE apple_product_id = $1', [appleProductId]);
+    return result.rows[0];
+  }
+
+  static async findByGoogleProductId(googleProductId) {
+    const result = await pool.query('SELECT * FROM plans WHERE google_product_id = $1', [googleProductId]);
+    return result.rows[0];
+  }
+
+  static async findFree() {
+    const result = await pool.query('SELECT * FROM plans WHERE price = 0 AND is_active = true LIMIT 1');
+    return result.rows[0];
+  }
 }
 
