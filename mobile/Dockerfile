@@ -29,11 +29,10 @@ WORKDIR /app
 RUN npm install -g serve@14
 
 COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/serve.js ./
 
-# PORT is set by Railway at runtime
+# PORT is set by Railway at runtime. Shell form so $PORT is expanded; exec so serve is PID 1.
 ENV PORT=3000
 EXPOSE 3000
 
-# Use Node script so PORT from env is always applied; bind to 0.0.0.0 for external access
-CMD ["node", "serve.js"]
+# Must use shell form so Railway's injected $PORT is expanded (JSON form does not expand env vars).
+CMD ["sh", "-c", "exec serve dist -s -l 0.0.0.0:${PORT}"]
