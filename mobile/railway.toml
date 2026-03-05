@@ -1,17 +1,8 @@
 [build]
-builder = "NIXPACKS"
-
-[build.nixpacksPlan.phases.setup]
-nixPkgs = ["nodejs_18"]
-
-[build.nixpacksPlan.phases.install]
-cmds = ["npm install"]
-
-[build.nixpacksPlan.phases.build]
-cmds = ["npx expo export --platform web"]
+builder = "DOCKERFILE"
+dockerfilePath = "Dockerfile"
 
 [deploy]
-startCommand = "npx serve dist -s -l 0.0.0.0:$PORT"
 healthcheckPath = "/"
 healthcheckTimeout = 300
 restartPolicyType = "ON_FAILURE"
