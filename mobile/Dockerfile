@@ -1,6 +1,10 @@
 # ---- Builder ----
 FROM node:18-bookworm-slim AS builder
 
+# Build-time env for Expo (inlined into web bundle). Set EXPO_PUBLIC_API_URL in Railway Variables.
+ARG EXPO_PUBLIC_API_URL
+ENV EXPO_PUBLIC_API_URL=${EXPO_PUBLIC_API_URL}
+
 WORKDIR /app
 
 RUN apt-get update -qq && apt-get install -y --no-install-recommends bash && rm -rf /var/lib/apt/lists/*
