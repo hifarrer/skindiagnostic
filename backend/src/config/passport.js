@@ -17,18 +17,23 @@ passport.deserializeUser(async (id, done) => {
   }
 });
 
+// Build Google callback URL exactly once (no trailing slashes; must match Google Console exactly)
+function getGoogleCallbackURL() {
+  const base = (process.env.BACKEND_URL || '').replace(/\/+$/, '');
+  if (process.env.OAUTH_CALLBACK_URL) {
+    return process.env.OAUTH_CALLBACK_URL.trim();
+  }
+  if (base) {
+    return `${base}/api/auth/oauth/google/callback`;
+  }
+  return '/api/auth/oauth/google/callback';
+}
+
+const googleCallbackURL = getGoogleCallbackURL();
+console.log('Google OAuth callback URL:', googleCallbackURL);
+
 // Google Strategy
 if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
-  // Determine the callback URL
-  // Priority: OAUTH_CALLBACK_URL > BACKEND_URL > relative path
-  let googleCallbackURL = '/api/auth/oauth/google/callback';
-  if (process.env.OAUTH_CALLBACK_URL) {
-    googleCallbackURL = process.env.OAUTH_CALLBACK_URL;
-  } else if (process.env.BACKEND_URL) {
-    googleCallbackURL = `${process.env.BACKEND_URL}/api/auth/oauth/google/callback`;
-  }
-  
-  console.log('Google OAuth callback URL:', googleCallbackURL);
 
   passport.use(
     new GoogleStrategy(
@@ -118,4 +123,5 @@ if (process.env.FACEBOOK_APP_ID && process.env.FACEBOOK_APP_SECRET) {
 }
 
 export default passport;
+export { getGoogleCallbackURL };
 

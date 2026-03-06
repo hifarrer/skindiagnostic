@@ -1,9 +1,17 @@
 import express from 'express';
-import passport from '../config/passport.js';
+import passport, { getGoogleCallbackURL } from '../config/passport.js';
 import { oauthCallback, getMe, logout, updateProfile } from '../controllers/authController.js';
 import { authenticate } from '../middleware/auth.js';
 
 const router = express.Router();
+
+// Debug: see exact redirect_uri sent to Google (must match Google Console exactly)
+router.get('/oauth/callback-url', (req, res) => {
+  res.json({
+    redirect_uri: getGoogleCallbackURL(),
+    hint: 'Add this exact redirect_uri to Google Cloud Console > Credentials > OAuth 2.0 Client > Authorized redirect URIs',
+  });
+});
 
 // OAuth routes
 router.get('/oauth/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
