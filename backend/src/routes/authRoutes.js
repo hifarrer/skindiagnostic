@@ -7,9 +7,19 @@ const router = express.Router();
 
 // Debug: see exact redirect_uri sent to Google (must match Google Console exactly)
 router.get('/oauth/callback-url', (req, res) => {
+  const configured = getGoogleCallbackURL();
+  const isAbsolute = /^https?:\/\//i.test(configured);
+  const fullRedirectUri = isAbsolute
+    ? configured
+    : `${req.protocol}://${req.get('host')}${configured}`;
   res.json({
-    redirect_uri: getGoogleCallbackURL(),
-    hint: 'Add this exact redirect_uri to Google Cloud Console > Credentials > OAuth 2.0 Client > Authorized redirect URIs',
+    redirect_uri: fullRedirectUri,
+    configured_value: configured,
+    backend_url_set: !!process.env.BACKEND_URL,
+    oauth_callback_url_set: !!process.env.OAUTH_CALLBACK_URL,
+    hint: isAbsolute
+      ? 'Add redirect_uri above to Google Cloud Console > Credentials > OAuth 2.0 Client > Authorized redirect URIs'
+      : 'BACKEND_URL (or OAUTH_CALLBACK_URL) is not set on this server. Set BACKEND_URL in Railway (backend service) to e.g. https://skindiagnostic-backend-production.up.railway.app and redeploy. Use redirect_uri above in Google Console until then.',
   });
 });
 

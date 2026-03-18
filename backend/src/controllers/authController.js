@@ -36,9 +36,9 @@ export const oauthCallback = async (req, res) => {
 
     const token = generateToken(user.id);
     
-    // For web, redirect to frontend with token in URL hash
-    // For API clients, return JSON
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:8081';
+    // For web, redirect to frontend with token in URL hash (must be full URL or browser treats as relative)
+    const rawFrontend = process.env.FRONTEND_URL || 'http://localhost:8081';
+    const frontendUrl = /^https?:\/\//i.test(rawFrontend) ? rawFrontend.replace(/\/+$/, '') : `https://${rawFrontend.replace(/\/+$/, '')}`;
     const userData = {
       token,
       user: {
@@ -63,7 +63,8 @@ export const oauthCallback = async (req, res) => {
     }
   } catch (error) {
     console.error('OAuth callback error:', error);
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:8081';
+    const rawFrontend = process.env.FRONTEND_URL || 'http://localhost:8081';
+    const frontendUrl = /^https?:\/\//i.test(rawFrontend) ? rawFrontend.replace(/\/+$/, '') : `https://${rawFrontend.replace(/\/+$/, '')}`;
     const isWebRequest = req.headers.accept && req.headers.accept.includes('text/html');
     
     if (isWebRequest) {
