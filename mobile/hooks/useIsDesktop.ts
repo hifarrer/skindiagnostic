@@ -1,30 +1,17 @@
-import { useState, useEffect } from 'react';
-import { Platform, Dimensions } from 'react-native';
+import { Platform, useWindowDimensions } from 'react-native';
 
+/**
+ * Layout breakpoint for web: use the shortest viewport edge, not width alone.
+ * Otherwise phones in landscape (e.g. width > 768) get the two-column landing
+ * layout and the hero visual collapses to a thin strip with a large empty area.
+ */
 export function useIsDesktop(): boolean {
-  const [isDesktop, setIsDesktop] = useState(false);
+  const { width, height } = useWindowDimensions();
 
-  useEffect(() => {
-    if (Platform.OS !== 'web') {
-      setIsDesktop(false);
-      return;
-    }
+  if (Platform.OS !== 'web') {
+    return false;
+  }
 
-    const checkIsDesktop = () => {
-      if (typeof window !== 'undefined') {
-        // Consider desktop if width is greater than 768px (tablet breakpoint)
-        const width = window.innerWidth || Dimensions.get('window').width;
-        setIsDesktop(width > 768);
-      }
-    };
-
-    checkIsDesktop();
-
-    if (typeof window !== 'undefined') {
-      window.addEventListener('resize', checkIsDesktop);
-      return () => window.removeEventListener('resize', checkIsDesktop);
-    }
-  }, []);
-
-  return isDesktop;
+  const shortestSide = Math.min(width, height);
+  return shortestSide > 768;
 }

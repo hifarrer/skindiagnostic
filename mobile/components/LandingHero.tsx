@@ -104,7 +104,7 @@ export default function LandingHero() {
           >
             <HeroCardGlow />
             <View style={[styles.heroGrid, !isDesktop && styles.heroGridStack]}>
-              <View style={styles.heroLeft}>
+              <View style={[styles.heroLeft, isDesktop ? styles.heroLeftFlex : styles.heroLeftStacked]}>
                 <Text style={styles.heroTitle}>
                   AI-Powered Skin{'\n'}
                   <Text nativeID="hero-accent" style={styles.heroAccentInline}>Analysis & Diagnostics</Text>
@@ -140,8 +140,8 @@ export default function LandingHero() {
                 </View>
               </View>
 
-              <View style={styles.heroRight}>
-                <View style={styles.visualCard}>
+              <View style={[styles.heroRight, isDesktop ? styles.heroRightFlex : styles.heroRightStacked]}>
+                <View style={[styles.visualCard, !isDesktop && styles.visualCardMobile]}>
                   <HeroVisualContent />
                   <View style={styles.scanRing} />
                   <View style={styles.faceCard}>
@@ -225,7 +225,14 @@ const styles = StyleSheet.create({
     flexDirection: 'column',
   },
   heroLeft: {
+    minWidth: 0,
+  },
+  heroLeftFlex: {
     flex: 1.05,
+  },
+  heroLeftStacked: {
+    width: '100%',
+    alignSelf: 'stretch',
   },
   heroTitle: {
     marginBottom: 12,
@@ -291,7 +298,14 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter, system-ui, sans-serif',
   },
   heroRight: {
+    minWidth: 0,
+  },
+  heroRightFlex: {
     flex: 0.95,
+  },
+  heroRightStacked: {
+    width: '100%',
+    alignSelf: 'stretch',
   },
   visualCard: {
     height: 360,
@@ -318,6 +332,9 @@ const styles = StyleSheet.create({
         backgroundColor: 'rgba(255,255,255,0.70)',
       },
     }),
+  },
+  visualCardMobile: {
+    height: 280,
   },
   scanRing: {
     position: 'absolute',

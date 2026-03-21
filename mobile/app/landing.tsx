@@ -72,10 +72,11 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    flexGrow: 1,
     paddingBottom: 20,
     ...Platform.select({
       web: {
+        // Fill at least one viewport so the page background looks correct; avoid flexGrow
+        // so flex children inside sections are not stretched to fill the viewport.
         minHeight: '100vh',
       },
     }),
