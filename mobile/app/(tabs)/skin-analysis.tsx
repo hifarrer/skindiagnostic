@@ -17,6 +17,7 @@ import { skinAnalysisService } from '../../services/skinAnalysisService';
 import { usePolling } from '../../hooks/usePolling';
 import { useAuth } from '../../contexts/AuthContext';
 import { useRouter } from 'expo-router';
+import { useIsDesktop } from '../../hooks/useIsDesktop';
 
 // Utility function to determine SD or HD mode based on image dimensions
 const determineImageMode = (width: number, height: number): 'sd' | 'hd' => {
@@ -91,6 +92,8 @@ const HD_CONCERNS = [
 export default function SkinAnalysisScreen() {
   const { user, token } = useAuth();
   const router = useRouter();
+  const isDesktop = useIsDesktop();
+  const showTakePhoto = !isDesktop;
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [taskId, setTaskId] = useState<string | null>(null);
@@ -230,7 +233,10 @@ export default function SkinAnalysisScreen() {
 
   const handleAnalyze = async () => {
     if (!selectedImage) {
-      Alert.alert('No Image', 'Please take or upload a photo first');
+      Alert.alert(
+        'No Image',
+        showTakePhoto ? 'Please take or upload a photo first' : 'Please upload a photo first'
+      );
       return;
     }
 
@@ -551,13 +557,15 @@ export default function SkinAnalysisScreen() {
         )}
 
         <View style={styles.buttonContainer}>
-          <TouchableOpacity
-            style={[styles.button, styles.primaryButton]}
-            onPress={handleTakePhoto}
-            disabled={uploading || polling}
-          >
-            <Text style={styles.buttonText}>📸 Take Photo</Text>
-          </TouchableOpacity>
+          {showTakePhoto && (
+            <TouchableOpacity
+              style={[styles.button, styles.primaryButton]}
+              onPress={handleTakePhoto}
+              disabled={uploading || polling}
+            >
+              <Text style={styles.buttonText}>📸 Take Photo</Text>
+            </TouchableOpacity>
+          )}
 
           <TouchableOpacity
             style={[styles.button, styles.secondaryButton]}
@@ -596,7 +604,7 @@ export default function SkinAnalysisScreen() {
         <View style={styles.infoBox}>
           <Text style={styles.infoTitle}>How it works:</Text>
           <Text style={styles.infoText}>
-            1. Take or upload a clear photo of your face{'\n'}
+            1. {showTakePhoto ? 'Take or upload' : 'Upload'} a clear photo of your face{'\n'}
             2. The system automatically detects the best analysis mode (SD or HD) based on your image size{'\n'}
             3. Select the skin concerns you want to analyze{'\n'}
             4. Get detailed insights and recommendations

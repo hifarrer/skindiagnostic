@@ -1,0 +1,25 @@
+{
+  "name": "SkinDiagnostics.AI",
+  "short_name": "SkinDiagnostics",
+  "description": "AI-powered skin analysis and diagnostics",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "theme_color": "#FF69B4",
+  "background_color": "#FF69B4",
+  "icons": [
+    {
+      "src": "/logo192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/logo512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

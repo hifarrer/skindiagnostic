@@ -6,6 +6,8 @@ import { StatusBar } from 'expo-status-bar';
 import { View, Text, StyleSheet, Platform } from 'react-native';
 import { Colors } from '../constants/Colors';
 import DesktopWrapper from '../components/DesktopWrapper';
+import PwaWebRoot from '../components/PwaWebRoot';
+import WebInstallPrompt from '../components/WebInstallPrompt';
 import { useIsDesktop } from '../hooks/useIsDesktop';
 
 // Simple error boundary
@@ -70,6 +72,8 @@ export default function RootLayout() {
       <AuthProvider>
         <SubscriptionProvider>
           <StatusBar style="light" />
+          <PwaWebRoot />
+          <WebInstallPrompt />
           {shouldWrap ? (
             <DesktopWrapper>
               <AppContent />

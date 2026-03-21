@@ -27,3 +27,5 @@ if (!fs.existsSync(appDir)) {
 }
 
 console.log('Pre-build: App directory found at:', appDir);
+
+require('./sync-pwa-public-assets.js');
