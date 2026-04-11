@@ -159,7 +159,36 @@ const pollSkinAnalysisTask = async (perfectCorpTaskId, dbTaskId, userId, imageUr
     }
   } catch (error) {
     console.error('[SkinAnalysis] Polling error:', error);
-    await Task.updateStatus(perfectCorpTaskId, 'error', null, { error: error.message });
+    const msg = error?.message || String(error);
+    let errorCode = null;
+    try {
+      const jsonMatch = msg.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        const parsed = JSON.parse(jsonMatch[0]);
+        errorCode = parsed?.data?.error ?? parsed?.error ?? null;
+      }
+    } catch {
+      /* ignore parse errors */
+    }
+
+    let prevMeta = {};
+    try {
+      const taskRow = await Task.findByTaskId(perfectCorpTaskId);
+      if (taskRow?.metadata) {
+        prevMeta =
+          typeof taskRow.metadata === 'string'
+            ? JSON.parse(taskRow.metadata)
+            : taskRow.metadata;
+      }
+    } catch {
+      /* ignore */
+    }
+
+    await Task.updateStatus(perfectCorpTaskId, 'error', null, {
+      ...prevMeta,
+      error: msg,
+      error_code: errorCode,
+    });
   }
 };
 
@@ -219,6 +248,8 @@ export const getTaskStatus = async (req, res) => {
       originalImageUrl: metadata?.original_image_url || null,
       output: output,
       createdAt: task.created_at,
+      errorCode: metadata?.error_code ?? null,
+      errorDetail: metadata?.error ?? null,
     });
   } catch (error) {
     console.error('Get task status error:', error);
