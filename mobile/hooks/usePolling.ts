@@ -42,10 +42,10 @@ export function usePolling({
         }
 
         if (result.status === 'error') {
-          const errorMsg = 'Task failed';
-          setError(errorMsg);
+          setError(result);
           setLoading(false);
-          onError?.(errorMsg);
+          // Pass the full payload so screens can show API error codes and messages.
+          onError?.(result);
           return;
         }
 

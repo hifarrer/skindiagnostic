@@ -72,6 +72,56 @@ const SD_CONCERNS = [
   { id: 'wrinkle', label: 'Wrinkles' },
 ];
 
+/** User-facing copy for known analysis API error codes; falls back to a generic message. */
+function getSkinAnalysisErrorMessage(result: {
+  errorCode?: string | null;
+  errorDetail?: string | null;
+  metadata?: { error_code?: string | null; error?: string | null };
+}): string {
+  const code =
+    result.errorCode ?? result.metadata?.error_code ?? null;
+  const messages: Record<string, string> = {
+    error_src_face_too_small:
+      'Your face looks too small in this photo. Move closer or crop so your face fills most of the frame, then try again.',
+    error_src_no_face:
+      'We could not detect a clear face. Use a front-facing photo with your full face visible and no heavy obstructions.',
+    error_src_face_occluded:
+      'Part of your face appears covered. Try removing sunglasses, masks, or hair across the face.',
+    error_src_image_too_small:
+      'The image resolution is too low. Use a sharper photo (at least HD: about 1280×720 or higher).',
+    error_src_image_too_large:
+      'The image file is too large. Try a smaller or more compressed photo.',
+    error_src_invalid_format:
+      'This image format is not supported. Use a standard JPG or PNG photo.',
+  };
+  if (code && messages[code]) {
+    return messages[code];
+  }
+  if (code) {
+    const readable = code.replace(/^error_src_/, '').replace(/_/g, ' ');
+    return `Analysis could not run (${readable}). Try a clearer, closer face photo and upload again.`;
+  }
+  const detail = result.errorDetail ?? result.metadata?.error ?? '';
+  if (typeof detail === 'string' && detail.length > 0) {
+    if (detail.includes('Timeout') || detail.includes('longer than expected')) {
+      return 'Analysis is taking too long. Check your connection and try again with a smaller or simpler photo.';
+    }
+    if (detail.length < 160 && !detail.includes('Task failed:')) {
+      return detail;
+    }
+  }
+  return 'Analysis could not complete. Use a well-lit, front-facing photo with your face large and in focus, then try again.';
+}
+
+const PHOTO_TIPS_BULLETS = [
+  'Front-facing selfie or portrait, eyes open, neutral expression.',
+  'Face fills a large part of the frame (not a tiny face in the distance).',
+  'Minimum HD resolution: about 1280×720; for HD concerns, short side at least 1080px is best.',
+  'Even, natural lighting; avoid heavy shadows or backlight.',
+  'No sunglasses, masks, or hands covering the face; tie hair back if it blocks features.',
+  'Sharp focus — not blurry; avoid extreme filters that flatten skin detail.',
+];
+
 const HD_CONCERNS = [
   { id: 'hd_acne', label: 'Acne (HD)' },
   { id: 'hd_droopy_lower_eyelid', label: 'Droopy Lower Eyelid (HD)' },
@@ -118,8 +168,27 @@ export default function SkinAnalysisScreen() {
       setSelectedScoreType(null); // Reset selection when new results arrive
     },
     onError: (error) => {
-      Alert.alert('Error', 'Failed to get analysis results');
       setTaskId(null);
+      if (error && typeof error === 'object' && error.status === 'error') {
+        setResult(error);
+        Alert.alert(
+          'Analysis could not complete',
+          getSkinAnalysisErrorMessage(error)
+        );
+        return;
+      }
+      const fallback =
+        typeof error === 'string'
+          ? error
+          : error instanceof Error
+            ? error.message
+            : 'Failed to get analysis results';
+      setResult({
+        status: 'error',
+        errorDetail: fallback,
+        metadata: { error: fallback },
+      });
+      Alert.alert('Error', fallback);
     },
   });
 
@@ -540,10 +609,27 @@ export default function SkinAnalysisScreen() {
         
         {result && result.status === 'error' && (
           <View style={[styles.resultBox, styles.errorBox]}>
-            <Text style={styles.resultTitle}>Analysis Error</Text>
+            <Text style={styles.resultTitle}>We couldn&apos;t analyze this photo</Text>
             <Text style={styles.resultText}>
-              There was an error processing your analysis. Please try again.
+              {getSkinAnalysisErrorMessage(result)}
             </Text>
+            <Text style={styles.errorTipsTitle}>Tips for best results</Text>
+            {PHOTO_TIPS_BULLETS.map((tip) => (
+              <Text key={tip} style={styles.errorTipBullet}>
+                • {tip}
+              </Text>
+            ))}
+            <TouchableOpacity
+              style={styles.dismissErrorHint}
+              onPress={() => {
+                setResult(null);
+              }}
+              accessibilityRole="button"
+            >
+              <Text style={styles.dismissErrorHintText}>
+                Dismiss — choose a new photo and tap Analyze again
+              </Text>
+            </TouchableOpacity>
           </View>
         )}
 
@@ -576,7 +662,12 @@ export default function SkinAnalysisScreen() {
           </TouchableOpacity>
         </View>
 
-        {selectedImage && concernMode && selectedConcerns.length > 0 && !uploading && !polling && !result && (
+        {selectedImage &&
+          concernMode &&
+          selectedConcerns.length > 0 &&
+          !uploading &&
+          !polling &&
+          (!result || result.status === 'error') && (
           <TouchableOpacity
             style={[styles.button, styles.analyzeButton]}
             onPress={handleAnalyze}
@@ -604,15 +695,19 @@ export default function SkinAnalysisScreen() {
         <View style={styles.infoBox}>
           <Text style={styles.infoTitle}>How it works:</Text>
           <Text style={styles.infoText}>
-            1. {showTakePhoto ? 'Take or upload' : 'Upload'} a clear photo of your face{'\n'}
+            1. {showTakePhoto ? 'Take or upload' : 'Upload'} a clear, close-up photo of your face{'\n'}
             2. The system automatically detects the best analysis mode (SD or HD) based on your image size{'\n'}
             3. Select the skin concerns you want to analyze{'\n'}
             4. Get detailed insights and recommendations
           </Text>
           <Text style={styles.infoSubtext}>
-            {'\n'}Image requirements:{'\n'}
-            • HD: Up to 2560px on long side, at least 1080px on short side{'\n'}
-            • SD: Up to 1920px on long side, at least 480px on short side
+            {'\n'}Photo quality (important):{'\n'}
+            • Front-facing, well-lit; face should be large in the frame (not far away){'\n'}
+            • Minimum HD-style resolution: about 1280×720; for HD mode, short side at least 1080px{'\n'}
+            • Avoid sunglasses, masks, or heavy blur/filters{'\n'}
+            {'\n'}Mode limits:{'\n'}
+            • HD: up to 2560px long side, at least 1080px short side{'\n'}
+            • SD: up to 1920px long side, at least 480px short side
           </Text>
         </View>
       </View>
@@ -756,6 +851,32 @@ const styles = StyleSheet.create({
   errorBox: {
     backgroundColor: 'rgba(255,94,168,.12)',
     borderColor: Colors.landing.pink,
+  },
+  errorTipsTitle: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: Colors.landing.dark,
+    marginTop: 16,
+    marginBottom: 8,
+    fontFamily: Colors.landing.fontFamily,
+  },
+  errorTipBullet: {
+    fontSize: 13,
+    color: Colors.landing.mutedDark,
+    lineHeight: 20,
+    marginBottom: 6,
+    fontFamily: Colors.landing.fontFamily,
+  },
+  dismissErrorHint: {
+    marginTop: 16,
+    alignSelf: 'flex-start',
+  },
+  dismissErrorHintText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: Colors.landing.purple,
+    textDecorationLine: 'underline',
+    fontFamily: Colors.landing.fontFamily,
   },
   debugText: {
     fontSize: 10,

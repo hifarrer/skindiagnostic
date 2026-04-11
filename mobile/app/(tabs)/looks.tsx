@@ -123,7 +123,9 @@ export default function LooksScreen() {
       setTaskId(null);
     },
     onError: (error) => {
-      Alert.alert('Error', 'Failed to get look results');
+      const message =
+        typeof error === 'string' ? error : 'Failed to get look results';
+      Alert.alert('Error', message);
       setTaskId(null);
     },
   });

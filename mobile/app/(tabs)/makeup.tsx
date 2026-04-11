@@ -143,7 +143,9 @@ export default function MakeupScreen() {
       setTaskId(null);
     },
     onError: (error) => {
-      Alert.alert('Error', 'Failed to get makeup results');
+      const message =
+        typeof error === 'string' ? error : 'Failed to get makeup results';
+      Alert.alert('Error', message);
       setTaskId(null);
     },
   });
