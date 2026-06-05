@@ -3,7 +3,44 @@ import { Task } from '../models/Task.js';
 import { SkinAnalysisResult } from '../models/SkinAnalysisResult.js';
 import { PerfectCorpService } from '../services/perfectCorpService.js';
 import { CloudinaryService } from '../services/cloudinaryService.js';
+import { WavespeedService } from '../services/wavespeedService.js';
 import { extractZipFromUrl } from '../utils/zipExtractor.js';
+
+// Minimum resolution PerfectCorp wants for a reliable skin analysis. Crops below this on
+// either axis get upscaled via Wavespeed before being sent.
+const MIN_DIMENSION = 1200;
+
+/**
+ * Compute a padded, in-bounds face crop box from Cloudinary's detected faces.
+ * Cloudinary `faces` is an array of [x, y, w, h]. We pick the largest face, pad generously
+ * (extra on top for forehead/hair, on the bottom for chin/neck) so PerfectCorp gets the whole
+ * face, then clamp to the image bounds. Falls back to the full image when no usable face.
+ */
+const computeFaceCropBox = (faces, imgW, imgH) => {
+  const usable = Array.isArray(faces)
+    ? faces.filter((f) => Array.isArray(f) && f[2] >= 1 && f[3] >= 1)
+    : [];
+
+  if (usable.length === 0) {
+    return { box: { x: 0, y: 0, w: imgW, h: imgH }, strategy: 'full_image_fallback' };
+  }
+
+  const [x, y, w, h] = usable.reduce((a, b) => (b[2] * b[3] > a[2] * a[3] ? b : a));
+
+  const padX = w * 0.35;
+  const padTop = h * 0.5;
+  const padBottom = h * 0.4;
+
+  let nx = Math.round(Math.max(0, x - padX));
+  let ny = Math.round(Math.max(0, y - padTop));
+  const nw = Math.round(Math.min(w + 2 * padX, imgW - nx));
+  const nh = Math.round(Math.min(h + padTop + padBottom, imgH - ny));
+
+  return {
+    box: { x: nx, y: ny, w: nw, h: nh },
+    strategy: usable.length > 1 ? 'largest_face' : 'face',
+  };
+};
 
 export const uploadImage = async (req, res) => {
   try {
@@ -13,21 +50,18 @@ export const uploadImage = async (req, res) => {
 
     let imageUrl;     // Original image, kept for history/display
     let publicId;     // Cloudinary public_id, used to derive the face crop
-    // Raw bytes + metadata for the Perfect Corp v2.1 File API upload (fallback to original).
-    let imageBuffer;
-    let fileMeta;
+    let faces;        // Detected face boxes ([x,y,w,h]) from Cloudinary
+    let imgW;         // Original image dimensions (for crop math + threshold)
+    let imgH;
 
     if (req.file) {
-      imageBuffer = req.file.buffer;
-      fileMeta = {
-        contentType: req.file.mimetype || 'image/jpeg',
-        fileName: req.file.originalname || 'selfie.jpg',
-        fileSize: req.file.size ?? req.file.buffer.length,
-      };
-      // Upload file buffer to Cloudinary for history/display
+      // Upload file buffer to Cloudinary for history/display + face detection
       const result = await CloudinaryService.uploadImage(req.file.buffer);
       imageUrl = result.secure_url;
       publicId = result.public_id;
+      faces = result.faces;
+      imgW = result.width;
+      imgH = result.height;
     } else {
       // Provided URL — store it on Cloudinary so we can derive a face crop from it too
       const srcUrl = req.body.imageUrl;
@@ -37,31 +71,57 @@ export const uploadImage = async (req, res) => {
       const result = await CloudinaryService.uploadFromUrl(srcUrl);
       imageUrl = result.secure_url;
       publicId = result.public_id;
-      const fetched = await axios.get(imageUrl, { responseType: 'arraybuffer' });
+      faces = result.faces;
+      imgW = result.width;
+      imgH = result.height;
+    }
+
+    // Crop to the face at native resolution, then upscale via Wavespeed when the crop is
+    // below PerfectCorp's preferred minimum. PerfectCorp rejects photos where the face fills
+    // too little of the frame (error_src_face_too_small); a sharp, large face avoids that.
+    const { box, strategy: cropStrategy } = computeFaceCropBox(faces, imgW, imgH);
+    const cropUrl = CloudinaryService.buildNativeFaceCropUrl(publicId, box);
+    const needsUpscale = box.w < MIN_DIMENSION || box.h < MIN_DIMENSION;
+
+    let finalImageUrl = cropUrl;
+    let upscaled = false;
+    let upscaledImageUrl = null;
+    let wavespeedRequestId = null;
+    let upscaleError = null;
+
+    if (needsUpscale) {
+      try {
+        const { requestId, outputUrl } = await WavespeedService.upscaleAndWait(cropUrl, {
+          targetResolution: '2k',
+          outputFormat: 'jpeg',
+        });
+        wavespeedRequestId = requestId;
+        // Re-upload the upscaled output to Cloudinary: Wavespeed deletes outputs after 7
+        // days, so we persist our own permanent copy and feed that to PerfectCorp.
+        const reupload = await CloudinaryService.uploadFromUrl(outputUrl);
+        upscaledImageUrl = reupload.secure_url;
+        finalImageUrl = upscaledImageUrl;
+        upscaled = true;
+      } catch (err) {
+        upscaleError = err.message;
+        console.error('[SkinAnalysis] Wavespeed upscale failed, using native crop:', upscaleError);
+      }
+    }
+
+    // Fetch the chosen image as raw bytes for the Perfect Corp v2.1 File API upload.
+    let imageBuffer;
+    let fileMeta;
+    try {
+      const fetched = await axios.get(finalImageUrl, { responseType: 'arraybuffer' });
       imageBuffer = Buffer.from(fetched.data);
       fileMeta = {
         contentType: fetched.headers['content-type'] || 'image/jpeg',
         fileName: 'selfie.jpg',
         fileSize: imageBuffer.length,
       };
-    }
-
-    // Perfect Corp rejects photos where the face fills too little of the frame
-    // (error_src_face_too_small). Send a face-detected, tightly-cropped derivative
-    // instead of the raw image. Fall back to the original if no face is detected.
-    if (publicId) {
-      try {
-        const faceCropUrl = CloudinaryService.buildFaceCropUrl(publicId);
-        const cropped = await axios.get(faceCropUrl, { responseType: 'arraybuffer' });
-        imageBuffer = Buffer.from(cropped.data);
-        fileMeta = {
-          contentType: cropped.headers['content-type'] || 'image/jpeg',
-          fileName: 'selfie.jpg',
-          fileSize: imageBuffer.length,
-        };
-      } catch (cropError) {
-        console.error('[SkinAnalysis] Face crop failed, using original image:', cropError.message);
-      }
+    } catch (fetchError) {
+      console.error('[SkinAnalysis] Failed to fetch processed image:', fetchError.message);
+      return res.status(500).json({ error: 'Failed to process image' });
     }
 
     // Get selected skin concerns from request body
@@ -86,7 +146,18 @@ export const uploadImage = async (req, res) => {
       task_type: 'skin_analysis',
       task_id: taskId,
       status: 'pending',
-      metadata: { image_url: imageUrl },
+      metadata: {
+        image_url: imageUrl,
+        public_id: publicId,
+        original_dims: { width: imgW, height: imgH },
+        crop_strategy: cropStrategy,
+        face_crop: box,
+        crop_image_url: cropUrl,
+        upscaled,
+        upscaled_image_url: upscaledImageUrl,
+        wavespeed_request_id: wavespeedRequestId,
+        upscale_error: upscaleError,
+      },
     });
 
     // Poll for results in background

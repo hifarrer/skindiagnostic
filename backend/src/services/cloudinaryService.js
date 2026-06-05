@@ -16,6 +16,7 @@ export class CloudinaryService {
         {
           folder,
           resource_type: 'image',
+          faces: true, // return detected face coordinates ([x,y,w,h]) on the result
           transformation: [
             { quality: 'auto' },
             { fetch_format: 'auto' },
@@ -39,6 +40,7 @@ export class CloudinaryService {
       const result = await cloudinary.uploader.upload(url, {
         folder,
         resource_type: 'image',
+        faces: true, // return detected face coordinates ([x,y,w,h]) on the result
         transformation: [
           { quality: 'auto' },
           { fetch_format: 'auto' },
@@ -63,6 +65,24 @@ export class CloudinaryService {
       resource_type: 'image',
       transformation: [
         { width: size, height: size, crop: 'thumb', gravity: 'face', zoom },
+        { quality: 'auto' },
+        { fetch_format: 'jpg' },
+      ],
+    });
+  }
+
+  /**
+   * Crop to an exact native-resolution pixel box. Unlike buildFaceCropUrl (which forces a
+   * fixed 1600x1600 and may upscale a small face), this delivers the box at its true pixel
+   * size, so the box's w/h is exactly the delivered resolution — the value we threshold
+   * against the 1200x1200 minimum before deciding whether to upscale.
+   */
+  static buildNativeFaceCropUrl(publicId, { x, y, w, h }) {
+    return cloudinary.url(publicId, {
+      secure: true,
+      resource_type: 'image',
+      transformation: [
+        { width: w, height: h, x, y, crop: 'crop' },
         { quality: 'auto' },
         { fetch_format: 'jpg' },
       ],
