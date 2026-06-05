@@ -70,40 +70,35 @@ export class WavespeedService {
   }
 
   /**
-   * Poll a prediction until it completes, then fetch the result and return the output
-   * image URL. Status flow: pending -> processing -> completed | failed.
+   * Poll the prediction's result endpoint until it completes and return the output image
+   * URL. The /predictions/{id}/result endpoint returns the full record with top-level
+   * `status` (pending -> processing -> completed | failed) and `outputs`. There is no
+   * separate status endpoint — GET /predictions/{id} (no /result) 404s.
    */
   static async pollUpscale(requestId, { intervalMs = 1500, maxAttempts = 60 } = {}) {
+    const pollUrl = `${BASE_URL}/predictions/${encodeURIComponent(requestId)}/result`;
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-      const pollUrl = `${BASE_URL}/predictions/${encodeURIComponent(requestId)}`;
       const { status, ok, data } = await httpRequest('GET', pollUrl);
 
       if (!ok) {
         throw new Error(`Polling failed: ${status} - ${JSON.stringify(data)}`);
       }
 
-      const taskStatus = data?.data?.status ?? data?.status;
+      // Tolerate both a top-level record and one nested under `data`.
+      const record = data?.data ?? data;
+      const taskStatus = record?.status;
 
       if (taskStatus === 'completed') {
-        const resultUrl = `${BASE_URL}/predictions/${encodeURIComponent(requestId)}/result`;
-        const { ok: rOk, data: rData } = await httpRequest('GET', resultUrl);
-        if (!rOk) {
-          throw new Error(`Result fetch failed: ${JSON.stringify(rData)}`);
-        }
-        const outputUrl =
-          rData?.data?.outputs?.[0] ??
-          rData?.data?.output ??
-          rData?.outputs?.[0] ??
-          rData?.output;
+        const outputUrl = record?.outputs?.[0] ?? record?.output;
         if (!outputUrl) {
-          throw new Error(`Output URL not found in result: ${JSON.stringify(rData)}`);
+          throw new Error(`Output URL not found in result: ${JSON.stringify(data)}`);
         }
         console.log('[Wavespeed] Upscale completed, output =', outputUrl);
         return outputUrl;
       }
 
       if (taskStatus === 'failed') {
-        throw new Error(`Upscale failed: ${JSON.stringify(data)}`);
+        throw new Error(`Upscale failed: ${record?.error || JSON.stringify(data)}`);
       }
 
       await sleep(intervalMs);
