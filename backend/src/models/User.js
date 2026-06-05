@@ -19,6 +19,14 @@ export class User {
     return result.rows[0];
   }
 
+  /** Resolve the id of the default "Free" plan, or null if none exists. */
+  static async getDefaultPlanId() {
+    const result = await queryWithRetry(
+      `SELECT id FROM plans WHERE name = 'Free' ORDER BY id LIMIT 1`
+    );
+    return result.rows[0]?.id ?? null;
+  }
+
   static async create(userData) {
     const {
       email,
@@ -26,9 +34,14 @@ export class User {
       avatar_url,
       oauth_provider,
       oauth_id,
-      subscription_plan_id = 1,
       subscription_status = 'inactive',
     } = userData;
+
+    // Don't hard-code a plan id: the plans table's SERIAL ids drift across
+    // migrations, so look up the Free plan dynamically and fall back to NULL
+    // (column is nullable) rather than violate the FK constraint on signup.
+    const subscription_plan_id =
+      userData.subscription_plan_id ?? (await User.getDefaultPlanId());
 
     const result = await queryWithRetry(
       `INSERT INTO users (email, name, avatar_url, oauth_provider, oauth_id, subscription_plan_id, subscription_status)
