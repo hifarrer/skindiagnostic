@@ -27,9 +27,11 @@ const computeFaceCropBox = (faces, imgW, imgH) => {
 
   const [x, y, w, h] = usable.reduce((a, b) => (b[2] * b[3] > a[2] * a[3] ? b : a));
 
-  const padX = w * 0.35;
-  const padTop = h * 0.5;
-  const padBottom = h * 0.4;
+  // Tight padding so the face dominates the crop fed to Wavespeed (it then spends its
+  // resolution budget on the face, not the neck/chest). Extra on top for forehead/hair.
+  const padX = w * 0.25;
+  const padTop = h * 0.4;
+  const padBottom = h * 0.25;
 
   let nx = Math.round(Math.max(0, x - padX));
   let ny = Math.round(Math.max(0, y - padTop));
@@ -80,10 +82,12 @@ export const uploadImage = async (req, res) => {
     // below PerfectCorp's preferred minimum. PerfectCorp rejects photos where the face fills
     // too little of the frame (error_src_face_too_small); a sharp, large face avoids that.
     const { box, strategy: cropStrategy } = computeFaceCropBox(faces, imgW, imgH);
-    const cropUrl = CloudinaryService.buildNativeFaceCropUrl(publicId, box);
     const needsUpscale = box.w < MIN_DIMENSION || box.h < MIN_DIMENSION;
 
-    let finalImageUrl = cropUrl;
+    // The asset we take the FINAL, tightly-framed face crop from. Start with the original;
+    // if the native face crop is below the minimum, upscale just that crop and frame from
+    // the upscaled copy so PerfectCorp gets a sharp, large face.
+    let cropPublicId = publicId;
     let upscaled = false;
     let upscaledImageUrl = null;
     let wavespeedRequestId = null;
@@ -91,22 +95,28 @@ export const uploadImage = async (req, res) => {
 
     if (needsUpscale) {
       try {
-        const { requestId, outputUrl } = await WavespeedService.upscaleAndWait(cropUrl, {
+        // Hand Wavespeed just the face region (native res) so its 2k budget goes to the face.
+        const nativeCropUrl = CloudinaryService.buildNativeFaceCropUrl(publicId, box);
+        const { requestId, outputUrl } = await WavespeedService.upscaleAndWait(nativeCropUrl, {
           targetResolution: '2k',
           outputFormat: 'jpeg',
         });
         wavespeedRequestId = requestId;
-        // Re-upload the upscaled output to Cloudinary: Wavespeed deletes outputs after 7
-        // days, so we persist our own permanent copy and feed that to PerfectCorp.
+        // Persist our own copy (Wavespeed deletes outputs after 7 days) and frame from it.
         const reupload = await CloudinaryService.uploadFromUrl(outputUrl);
         upscaledImageUrl = reupload.secure_url;
-        finalImageUrl = upscaledImageUrl;
+        cropPublicId = reupload.public_id;
         upscaled = true;
       } catch (err) {
         upscaleError = err.message;
-        console.error('[SkinAnalysis] Wavespeed upscale failed, using native crop:', upscaleError);
+        console.error('[SkinAnalysis] Wavespeed upscale failed, framing from original:', upscaleError);
       }
     }
+
+    // Final image for PerfectCorp: tight, face-centered framing (c_thumb,g_face,z_1.2) that
+    // PerfectCorp accepts (face fills ~85% of the frame). Pixels are real — from the upscaled
+    // crop when we upscaled, otherwise from the original.
+    const finalImageUrl = CloudinaryService.buildFaceCropUrl(cropPublicId);
 
     // Fetch the chosen image as raw bytes for the Perfect Corp v2.1 File API upload.
     let imageBuffer;
@@ -152,7 +162,7 @@ export const uploadImage = async (req, res) => {
         original_dims: { width: imgW, height: imgH },
         crop_strategy: cropStrategy,
         face_crop: box,
-        crop_image_url: cropUrl,
+        final_image_url: finalImageUrl,
         upscaled,
         upscaled_image_url: upscaledImageUrl,
         wavespeed_request_id: wavespeedRequestId,
