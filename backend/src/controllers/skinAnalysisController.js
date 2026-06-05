@@ -10,6 +10,10 @@ import { extractZipFromUrl } from '../utils/zipExtractor.js';
 // below this (with margin) via Wavespeed before sending.
 const MIN_DIMENSION = 1200;
 
+// Below this native face width, even a 2k Wavespeed upscale is mostly fabricated detail and
+// would yield unreliable skin scores — reject up front instead of wasting an upscale call.
+const MIN_FACE_WIDTH = 200;
+
 // PerfectCorp requires the (real) face width to be > 60% of the image width, else it returns
 // error_src_face_too_small. Cloudinary's detected face box is WIDER than PerfectCorp's notion
 // of face width (it includes hair/ears), so we must aim higher: empirically a Cloudinary
@@ -20,26 +24,33 @@ const TARGET_FACE_WIDTH_RATIO = 0.85;
 const CROP_ASPECT = 1.4;
 
 /**
- * Compute a centered, portrait face crop from Cloudinary's detected faces such that the
- * detected face box fills ~TARGET_FACE_WIDTH_RATIO of the crop width (so PerfectCorp's
- * narrower face measurement clears its >60% rule). Picks the largest face, biases slightly
- * upward for forehead/hair, and clamps to image bounds. Falls back to the full image when no
- * usable face is detected.
+ * Pre-flight analysis from Cloudinary's detected faces — decides, BEFORE any Wavespeed or
+ * PerfectCorp call, whether the photo is usable and whether it needs upscaling. Cloudinary's
+ * `faces` ([x,y,w,h]) gives the exact native face size for free, so no vision API is needed.
+ *
+ * Returns either { error } to reject the photo, or a crop plan:
+ *   { box, strategy, needsUpscale, faceWidth, cropWidth, reason }
+ * The box is a centered, portrait crop where the detected face fills ~TARGET_FACE_WIDTH_RATIO
+ * of the width (so PerfectCorp's narrower face measurement clears its >60% rule).
  */
-const computeFaceCropBox = (faces, imgW, imgH) => {
+const planFaceCrop = (faces, imgW, imgH) => {
   const usable = Array.isArray(faces)
     ? faces.filter((f) => Array.isArray(f) && f[2] >= 1 && f[3] >= 1)
     : [];
 
   if (usable.length === 0) {
-    return { box: { x: 0, y: 0, w: imgW, h: imgH }, strategy: 'full_image_fallback' };
+    return { error: 'No face detected. Please use a clear, front-facing photo of your face.' };
   }
 
   const [x, y, w, h] = usable.reduce((a, b) => (b[2] * b[3] > a[2] * a[3] ? b : a));
 
+  if (w < MIN_FACE_WIDTH) {
+    return { error: 'Your face is too small or far away. Please use a closer, higher-resolution photo.' };
+  }
+
   // Crop dimensions from the target face-width ratio, clamped to the image.
-  let cw = Math.min(Math.round(w / TARGET_FACE_WIDTH_RATIO), imgW);
-  let ch = Math.min(Math.round(cw * CROP_ASPECT), imgH);
+  const cw = Math.min(Math.round(w / TARGET_FACE_WIDTH_RATIO), imgW);
+  const ch = Math.min(Math.round(cw * CROP_ASPECT), imgH);
 
   const cx = x + w / 2;
   const cy = y + h / 2;
@@ -49,9 +60,16 @@ const computeFaceCropBox = (faces, imgW, imgH) => {
   nx = Math.max(0, Math.min(nx, imgW - cw));
   ny = Math.max(0, Math.min(ny, imgH - ch));
 
+  const box = { x: nx, y: ny, w: cw, h: ch };
+  const needsUpscale = box.w < MIN_DIMENSION || box.h < MIN_DIMENSION;
+
   return {
-    box: { x: nx, y: ny, w: cw, h: ch },
+    box,
     strategy: usable.length > 1 ? 'largest_face' : 'face',
+    needsUpscale,
+    faceWidth: w,
+    cropWidth: box.w,
+    reason: `face ${w}px → crop ${box.w}px ${needsUpscale ? '<' : '≥'} ${MIN_DIMENSION}px min`,
   };
 };
 
@@ -89,17 +107,25 @@ export const uploadImage = async (req, res) => {
       imgH = result.height;
     }
 
+    // Pre-flight: decide from Cloudinary's free face data whether the photo is usable and
+    // whether upscaling is needed — BEFORE spending a Wavespeed or PerfectCorp call.
+    const plan = planFaceCrop(faces, imgW, imgH);
+    if (plan.error) {
+      console.log(`[SkinAnalysis] Rejected (${imgW}x${imgH}): ${plan.error}`);
+      // Drop the just-uploaded original; there's no task/history record for a rejected photo.
+      CloudinaryService.deleteImage(publicId).catch((e) =>
+        console.error('[SkinAnalysis] Failed to clean up rejected upload:', e.message)
+      );
+      return res.status(400).json({ error: plan.error });
+    }
+
     // Frame the face so it fills the frame the way PerfectCorp requires (face width > 60%;
     // see TARGET_FACE_WIDTH_RATIO), then upscale via Wavespeed when the native crop is below
     // PerfectCorp's HD short-side minimum. The framed crop is sent to PerfectCorp as-is —
     // upscaling preserves the framing, so no second crop is needed.
-    const { box, strategy: cropStrategy } = computeFaceCropBox(faces, imgW, imgH);
+    const { box, strategy: cropStrategy, needsUpscale, faceWidth, cropWidth, reason } = plan;
     const nativeCropUrl = CloudinaryService.buildNativeFaceCropUrl(publicId, box);
-    const needsUpscale = box.w < MIN_DIMENSION || box.h < MIN_DIMENSION;
-    console.log(
-      `[SkinAnalysis] original ${imgW}x${imgH}, strategy=${cropStrategy}, ` +
-      `crop ${box.w}x${box.h} @ (${box.x},${box.y}), needsUpscale=${needsUpscale}`
-    );
+    console.log(`[SkinAnalysis] original ${imgW}x${imgH}, strategy=${cropStrategy}, ${reason}`);
 
     let finalImageUrl = nativeCropUrl;
     let upscaled = false;
@@ -171,6 +197,9 @@ export const uploadImage = async (req, res) => {
         original_dims: { width: imgW, height: imgH },
         crop_strategy: cropStrategy,
         face_crop: box,
+        face_width: faceWidth,
+        crop_width: cropWidth,
+        decision_reason: reason,
         final_image_url: finalImageUrl,
         upscaled,
         upscaled_image_url: upscaledImageUrl,
