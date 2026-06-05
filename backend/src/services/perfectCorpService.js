@@ -1,6 +1,8 @@
 import axios from 'axios';
 
 const BASE_URL = process.env.PERFECT_CORP_BASE_URL || 'https://yce-api-01.makeupar.com/s2s/v2.0';
+// Skin analysis uses v2.1 (File API flow). Kept separate so makeup/look VTO stay on v2.0.
+const SKIN_BASE_URL = process.env.PERFECT_CORP_SKIN_BASE_URL || 'https://yce-api-01.makeupar.com/s2s/v2.1';
 const API_KEY = process.env.PERFECT_CORP_API_KEY;
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -62,8 +64,59 @@ const pollTask = async (baseUrl, taskId, { intervalMs = 2000, maxAttempts = 300 
 };
 
 export class PerfectCorpService {
-  static async startSkinAnalysis(imageUrl, dstActions = null) {
-    const url = `${BASE_URL}/task/skin-analysis`;
+  /**
+   * v2.1 File API: register the file, then PUT the raw bytes to the returned
+   * presigned URL. Returns the file_id used to start the skin-analysis task.
+   */
+  static async uploadSkinAnalysisFile(buffer, { contentType, fileName, fileSize }) {
+    const registerUrl = `${SKIN_BASE_URL}/file/skin-analysis`;
+    const registerBody = {
+      files: [
+        {
+          content_type: contentType,
+          file_name: fileName,
+          file_size: fileSize,
+        },
+      ],
+    };
+
+    const { status, ok, data } = await httpRequest('POST', registerUrl, { body: registerBody });
+    if (!ok) {
+      throw new Error(`File register failed: ${status} - ${JSON.stringify(data)}`);
+    }
+
+    const file = data?.files?.[0];
+    const fileId = file?.file_id;
+    const uploadReq = file?.requests?.[0];
+    if (!fileId || !uploadReq?.url) {
+      throw new Error(`Upload URL/file_id not found in response: ${JSON.stringify(data)}`);
+    }
+
+    // Raw upload to the presigned URL. Use the exact headers returned (Content-Type,
+    // Content-Length) and NO Bearer/JSON header — this is not a Perfect Corp API call.
+    try {
+      await axios({
+        method: uploadReq.method || 'PUT',
+        url: uploadReq.url,
+        headers: uploadReq.headers || { 'Content-Type': contentType },
+        data: buffer,
+        maxBodyLength: Infinity,
+        maxContentLength: Infinity,
+      });
+    } catch (error) {
+      const detail = error.response?.status
+        ? `${error.response.status} - ${JSON.stringify(error.response.data)}`
+        : error.message;
+      throw new Error(`File upload (PUT) failed: ${detail}`);
+    }
+
+    return fileId;
+  }
+
+  static async startSkinAnalysis(imageBuffer, fileMeta, dstActions = null) {
+    const fileId = await this.uploadSkinAnalysisFile(imageBuffer, fileMeta);
+
+    const url = `${SKIN_BASE_URL}/task/skin-analysis`;
     const body = {
       dst_actions: dstActions || [
         'hd_wrinkle',
@@ -80,7 +133,7 @@ export class PerfectCorpService {
         'hd_age_spot',
         'hd_redness',
       ],
-      src_file_url: imageUrl,
+      src_file_id: fileId,
       format: 'json', // Request JSON format to get mask_urls directly instead of ZIP
     };
 
@@ -99,7 +152,7 @@ export class PerfectCorpService {
   }
 
   static async pollSkinAnalysis(taskId) {
-    return pollTask(`${BASE_URL}/task/skin-analysis`, taskId);
+    return pollTask(`${SKIN_BASE_URL}/task/skin-analysis`, taskId);
   }
 
   static async startMakeupVTO(imageUrl, effects) {

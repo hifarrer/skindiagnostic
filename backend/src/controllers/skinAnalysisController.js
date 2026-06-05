@@ -1,3 +1,4 @@
+import axios from 'axios';
 import { Task } from '../models/Task.js';
 import { SkinAnalysisResult } from '../models/SkinAnalysisResult.js';
 import { PerfectCorpService } from '../services/perfectCorpService.js';
@@ -11,17 +12,33 @@ export const uploadImage = async (req, res) => {
     }
 
     let imageUrl;
-    
+    // Raw bytes + metadata for the Perfect Corp v2.1 File API upload.
+    let imageBuffer;
+    let fileMeta;
+
     if (req.file) {
-      // Upload file buffer to Cloudinary
+      imageBuffer = req.file.buffer;
+      fileMeta = {
+        contentType: req.file.mimetype || 'image/jpeg',
+        fileName: req.file.originalname || 'selfie.jpg',
+        fileSize: req.file.size ?? req.file.buffer.length,
+      };
+      // Upload file buffer to Cloudinary for history/display
       const result = await CloudinaryService.uploadImage(req.file.buffer);
       imageUrl = result.secure_url;
     } else {
-      // Use provided URL or upload from URL
+      // Use provided URL — fetch the bytes so we can run the File API upload
       imageUrl = req.body.imageUrl;
-      if (!imageUrl.startsWith('http')) {
+      if (!imageUrl || !imageUrl.startsWith('http')) {
         return res.status(400).json({ error: 'Invalid image URL' });
       }
+      const fetched = await axios.get(imageUrl, { responseType: 'arraybuffer' });
+      imageBuffer = Buffer.from(fetched.data);
+      fileMeta = {
+        contentType: fetched.headers['content-type'] || 'image/jpeg',
+        fileName: 'selfie.jpg',
+        fileSize: imageBuffer.length,
+      };
     }
 
     // Get selected skin concerns from request body
@@ -29,8 +46,8 @@ export const uploadImage = async (req, res) => {
     if (req.body.dstActions) {
       try {
         // Parse if it's a JSON string
-        dstActions = typeof req.body.dstActions === 'string' 
-          ? JSON.parse(req.body.dstActions) 
+        dstActions = typeof req.body.dstActions === 'string'
+          ? JSON.parse(req.body.dstActions)
           : req.body.dstActions;
       } catch (e) {
         console.error('Error parsing dstActions:', e);
@@ -38,7 +55,7 @@ export const uploadImage = async (req, res) => {
     }
 
     // Start Perfect Corp task
-    const { taskId } = await PerfectCorpService.startSkinAnalysis(imageUrl, dstActions);
+    const { taskId } = await PerfectCorpService.startSkinAnalysis(imageBuffer, fileMeta, dstActions);
 
     // Create task record
     const task = await Task.create({

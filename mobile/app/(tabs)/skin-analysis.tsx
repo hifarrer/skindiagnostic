@@ -24,8 +24,8 @@ const determineImageMode = (width: number, height: number): 'sd' | 'hd' => {
   const longSide = Math.max(width, height);
   const shortSide = Math.min(width, height);
   
-  // HD: up to 2560 pixels on the long side and at least 1080 pixels on the short side
-  if (longSide <= 2560 && shortSide >= 1080) {
+  // HD: up to 4096 pixels on the long side and at least 1080 pixels on the short side (v2.1)
+  if (longSide <= 4096 && shortSide >= 1080) {
     return 'hd';
   }
   
@@ -81,6 +81,26 @@ function getSkinAnalysisErrorMessage(result: {
   const code =
     result.errorCode ?? result.metadata?.error_code ?? null;
   const messages: Record<string, string> = {
+    // Perfect Corp API v2.1 error codes
+    error_no_face:
+      'We could not detect a clear face. Use a front-facing photo with your full face visible and no heavy obstructions.',
+    error_pose:
+      'We could not read your head pose. Face the camera directly, keep your head straight, and try again.',
+    error_face_parsing:
+      'We could not map your facial features clearly. Use a sharp, front-facing photo with even lighting and your face unobstructed.',
+    error_decode_image:
+      'This image could not be read. Use a standard JPG or PNG photo and try again.',
+    error_exceed_max_image_size:
+      'The image resolution is too high. Use a photo no larger than about 4096px on the long side.',
+    exceed_max_filesize:
+      'The image file is too large (max 10MB). Try a smaller or more compressed photo.',
+    error_nsfw_content_detected:
+      'This photo could not be processed. Please use a clear, front-facing face photo.',
+    invalid_parameter:
+      'Something was off with the analysis request. Please try again with a different photo.',
+    unknown_internal_error:
+      'Something went wrong on our side. Please try again in a moment.',
+    // Legacy v2.0 codes (kept for back-compat)
     error_src_face_too_small:
       'Your face looks too small in this photo. Move closer or crop so your face fills most of the frame, then try again.',
     error_src_no_face:
@@ -706,7 +726,7 @@ export default function SkinAnalysisScreen() {
             • Minimum HD-style resolution: about 1280×720; for HD mode, short side at least 1080px{'\n'}
             • Avoid sunglasses, masks, or heavy blur/filters{'\n'}
             {'\n'}Mode limits:{'\n'}
-            • HD: up to 2560px long side, at least 1080px short side{'\n'}
+            • HD: up to 4096px long side, at least 1080px short side{'\n'}
             • SD: up to 1920px long side, at least 480px short side
           </Text>
         </View>
