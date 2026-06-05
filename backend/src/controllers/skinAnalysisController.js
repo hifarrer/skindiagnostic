@@ -11,8 +11,9 @@ export const uploadImage = async (req, res) => {
       return res.status(400).json({ error: 'No image provided' });
     }
 
-    let imageUrl;
-    // Raw bytes + metadata for the Perfect Corp v2.1 File API upload.
+    let imageUrl;     // Original image, kept for history/display
+    let publicId;     // Cloudinary public_id, used to derive the face crop
+    // Raw bytes + metadata for the Perfect Corp v2.1 File API upload (fallback to original).
     let imageBuffer;
     let fileMeta;
 
@@ -26,12 +27,16 @@ export const uploadImage = async (req, res) => {
       // Upload file buffer to Cloudinary for history/display
       const result = await CloudinaryService.uploadImage(req.file.buffer);
       imageUrl = result.secure_url;
+      publicId = result.public_id;
     } else {
-      // Use provided URL — fetch the bytes so we can run the File API upload
-      imageUrl = req.body.imageUrl;
-      if (!imageUrl || !imageUrl.startsWith('http')) {
+      // Provided URL — store it on Cloudinary so we can derive a face crop from it too
+      const srcUrl = req.body.imageUrl;
+      if (!srcUrl || !srcUrl.startsWith('http')) {
         return res.status(400).json({ error: 'Invalid image URL' });
       }
+      const result = await CloudinaryService.uploadFromUrl(srcUrl);
+      imageUrl = result.secure_url;
+      publicId = result.public_id;
       const fetched = await axios.get(imageUrl, { responseType: 'arraybuffer' });
       imageBuffer = Buffer.from(fetched.data);
       fileMeta = {
@@ -39,6 +44,24 @@ export const uploadImage = async (req, res) => {
         fileName: 'selfie.jpg',
         fileSize: imageBuffer.length,
       };
+    }
+
+    // Perfect Corp rejects photos where the face fills too little of the frame
+    // (error_src_face_too_small). Send a face-detected, tightly-cropped derivative
+    // instead of the raw image. Fall back to the original if no face is detected.
+    if (publicId) {
+      try {
+        const faceCropUrl = CloudinaryService.buildFaceCropUrl(publicId);
+        const cropped = await axios.get(faceCropUrl, { responseType: 'arraybuffer' });
+        imageBuffer = Buffer.from(cropped.data);
+        fileMeta = {
+          contentType: cropped.headers['content-type'] || 'image/jpeg',
+          fileName: 'selfie.jpg',
+          fileSize: imageBuffer.length,
+        };
+      } catch (cropError) {
+        console.error('[SkinAnalysis] Face crop failed, using original image:', cropError.message);
+      }
     }
 
     // Get selected skin concerns from request body

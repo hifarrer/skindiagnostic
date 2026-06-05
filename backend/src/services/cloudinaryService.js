@@ -50,6 +50,25 @@ export class CloudinaryService {
     }
   }
 
+  /**
+   * Build a face-centered, tightly-zoomed crop URL for an already-uploaded asset.
+   * Perfect Corp skin analysis rejects photos where the face fills too little of the
+   * frame (error_src_face_too_small). `c_thumb,g_face` detects the face and crops to
+   * it; zoom 1.2 makes the face fill ~85% of the frame while keeping forehead/chin/
+   * cheeks visible. Output is forced to JPEG to keep the upload small.
+   */
+  static buildFaceCropUrl(publicId, { size = 1600, zoom = '1.2' } = {}) {
+    return cloudinary.url(publicId, {
+      secure: true,
+      resource_type: 'image',
+      transformation: [
+        { width: size, height: size, crop: 'thumb', gravity: 'face', zoom },
+        { quality: 'auto' },
+        { fetch_format: 'jpg' },
+      ],
+    });
+  }
+
   static async deleteImage(publicId) {
     try {
       const result = await cloudinary.uploader.destroy(publicId);
