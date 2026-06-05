@@ -85,7 +85,9 @@ export class PerfectCorpService {
       throw new Error(`File register failed: ${status} - ${JSON.stringify(data)}`);
     }
 
-    const file = data?.files?.[0];
+    // Response body wraps the payload under `data` ({ status, data: { files: [...] } }),
+    // but tolerate a top-level `files` too.
+    const file = data?.data?.files?.[0] ?? data?.files?.[0];
     const fileId = file?.file_id;
     const uploadReq = file?.requests?.[0];
     if (!fileId || !uploadReq?.url) {
