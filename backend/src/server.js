@@ -3,6 +3,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import passport from './config/passport.js';
 import { errorHandler } from './middleware/errorHandler.js';
+import { getAllowedOrigins } from './config/urls.js';
 
 // Routes
 import authRoutes from './routes/authRoutes.js';
@@ -23,8 +24,10 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Middleware
+// FRONTEND_URL may list several origins (e.g. www and apex); accept them all.
+// Requests without an Origin header (native app, curl, server-to-server) pass through.
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:8081',
+  origin: (origin, callback) => callback(null, !origin || getAllowedOrigins().includes(origin)),
   credentials: true,
 }));
 

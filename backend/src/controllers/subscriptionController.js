@@ -1,10 +1,9 @@
 import Stripe from 'stripe';
 import { User } from '../models/User.js';
 import { Plan } from '../models/Plan.js';
+import { getFrontendUrl } from '../config/urls.js';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
-
-const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:8081';
 
 async function getOrCreateStripeCustomer(user) {
   if (user.stripe_customer_id) {
@@ -40,8 +39,8 @@ export const createCheckoutSession = async (req, res) => {
       customer: customerId,
       mode: 'subscription',
       line_items: [{ price: plan.stripe_price_id, quantity: 1 }],
-      success_url: `${FRONTEND_URL}/subscription?success=true`,
-      cancel_url: `${FRONTEND_URL}/subscription?canceled=true`,
+      success_url: `${getFrontendUrl()}/subscription?success=true`,
+      cancel_url: `${getFrontendUrl()}/subscription?canceled=true`,
       metadata: { userId: user.id.toString(), planId: plan.id.toString() },
     };
 
@@ -70,7 +69,7 @@ export const createPortalSession = async (req, res) => {
 
     const session = await stripe.billingPortal.sessions.create({
       customer: user.stripe_customer_id,
-      return_url: `${FRONTEND_URL}/subscription`,
+      return_url: `${getFrontendUrl()}/subscription`,
     });
 
     res.json({ url: session.url });

@@ -2,6 +2,7 @@ import { User } from '../models/User.js';
 import { Task } from '../models/Task.js';
 import { generateToken } from '../middleware/auth.js';
 import pool from '../config/database.js';
+import { getFrontendUrl } from '../config/urls.js';
 
 export const oauthCallback = async (req, res) => {
   try {
@@ -37,8 +38,7 @@ export const oauthCallback = async (req, res) => {
     const token = generateToken(user.id);
     
     // For web, redirect to frontend with token in URL hash (must be full URL or browser treats as relative)
-    const rawFrontend = process.env.FRONTEND_URL || 'http://localhost:8081';
-    const frontendUrl = /^https?:\/\//i.test(rawFrontend) ? rawFrontend.replace(/\/+$/, '') : `https://${rawFrontend.replace(/\/+$/, '')}`;
+    const frontendUrl = getFrontendUrl();
     const userData = {
       token,
       user: {
@@ -63,8 +63,7 @@ export const oauthCallback = async (req, res) => {
     }
   } catch (error) {
     console.error('OAuth callback error:', error);
-    const rawFrontend = process.env.FRONTEND_URL || 'http://localhost:8081';
-    const frontendUrl = /^https?:\/\//i.test(rawFrontend) ? rawFrontend.replace(/\/+$/, '') : `https://${rawFrontend.replace(/\/+$/, '')}`;
+    const frontendUrl = getFrontendUrl();
     const isWebRequest = req.headers.accept && req.headers.accept.includes('text/html');
     
     if (isWebRequest) {
